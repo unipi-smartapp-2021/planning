@@ -1,2 +1,2 @@
-uint16 version
-uint8 x
+float32 dt
+float32 dv

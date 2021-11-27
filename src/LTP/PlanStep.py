@@ -15,7 +15,7 @@ class PlanStep:
         if (velocity < 0):
             raise ValueError("Velocity must be a positive value")
         self.velocity = velocity
-        self.velocity_vector = []
+        self.velocity_vector = velocity_vector
 
     def get_position(self):
         """

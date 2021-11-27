@@ -1,10 +1,11 @@
 import rospy
+import os
+import LTP.RiskFunctions as risk_fun
 from LTP.Utils import force_inside_track
 from LTP.Trajectory import Trajectory
 from LTP.TrackMap import TrackMap
 from LTP.Parameters import Parameters
 from LTP.SampleTrack import StraightTrackMap
-import LTP.RiskFunctions as risk_fun
 from LTP.ROSInterface import send_trajectory_to_ros_topic
 from planning.msg import LTP_Plan
 from rospy.client import spin
@@ -35,6 +36,7 @@ class Acceleration(Race):
 
         # Generate the track map given the info
         self.track_map = TrackMap()
+        print(os.getcwd())
         self.track_map.load_track("./src/LTP/tests/tracks/acceleration.json")
         print(self.track_map.get_right_cones())
         # Generate the Trajectory

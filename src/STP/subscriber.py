@@ -1,9 +1,8 @@
 import rospy
-from planning.msg import STP_Data, LTP_Plan
-from STP.Stp import STP
+from planning.msg import STP_Data
 
 def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+    rospy.loginfo(f"dt: {data.dt} - dv: {data.dv}")
     
 def listener():
 
@@ -12,12 +11,13 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
-    rospy.init_node('listener', anonymous=False)
-    rospy.Subscriber("STP", STP_Data, callback)
+    rospy.Subscriber("stp_data", STP_Data, callback)
     # spin() simply keeps python from exiting until this node is stopped
+    rospy.init_node('listener', anonymous=False)
+    while not rospy.is_shutdown():
+        continue
+
     rospy.spin()
-
-
 
 if __name__ == '__main__':
     listener()

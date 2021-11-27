@@ -2,6 +2,7 @@ import numpy as np
 import math
 from LTP.Trajectory import Trajectory
 from LTP.PlanStep import PlanStep
+from LTP.Parameters import Parameters
 
 class Car():
     ''' Car class
@@ -15,8 +16,8 @@ class Car():
     def __init__(self):
         self.current_position_x = 0
         self.current_position_y = 0
-        self.current_speed_x = 0
-        self.current_speed_y = 0
+        self.current_speed_x = 0.1
+        self.current_speed_y = 0.1
 
     def get_position(self):
         return np.array([self.current_position_x, self.current_position_y])
@@ -84,10 +85,14 @@ class STP():
     def update_ltp(self, data):
         p_x, p_y, v_x, v_y = data.pos_x_list, data.pos_y_list, data.vel_x_list, data.vel_y_list
         assert(len(p_x) == len(p_y) == len(v_x) == len(v_y))
+        t = Trajectory(Parameters())
         new_trajectory = []
         for i in range(len(p_x)):
-            new_trajectory.append(PlanStep((p_x[i], p_y[i]), math.sqrt(v_y[i]**2 + v_x[i]**2), (v_x[i], v_y[i])))
-        self.set_trajectory(new_trajectory)
+            p = PlanStep((p_x[i], p_y[i]), round(math.sqrt(v_y[i]**2 + v_x[i]**2), 3), (v_x[i], v_y[i]))
+            print(p)
+            new_trajectory.append(p)
+        t.set_trajectory(new_trajectory)
+        self.set_trajectory(t)
         # TODO: new plan -> update last_plan_index variable
         # if new plan start from current position is fine
         # else find new closest point wrt old trajectory
@@ -110,13 +115,21 @@ class STP():
     def compute(self):
         if self.trajectory is None:
             return None
+        print("-"*20 + "Computing next step" + "-"*20)
         # print("Alle curve si va dritto!")
         # 1. Find next plan point
         t = self.trajectory.get_trajectory()
         index = self.last_plan_index%len(t)
         d = math.inf
         min_index = index
+        first = True
         while True:
+            if index == self.last_plan_index:
+                if not first:
+                    print("Loop all plan and no point was found.")
+                    return -1
+                else:
+                    first = False
             curr_p = t[index]
             dist = self.get_distance_mag(self.car.get_position(), curr_p.position)
             dist_c = self.get_distance_comp(self.car.get_position(), curr_p.position)
@@ -176,7 +189,7 @@ class STP():
         print(f"delta_v: {delta_v}")
         
         # define simulation
-        new_car_module = car_v_r_module + delta_v
+        new_car_module = car_v_r_module + delta_v/2
         print(f"new_car_module : {new_car_module}")
         new_car_angle = car_v_r_angle - delta_theta
         print(f"new_car_angle : {math.degrees(new_car_angle)}")
@@ -190,7 +203,7 @@ class STP():
         print(f"car_x: {self.car.current_position_x}, car_y: {self.car.current_position_y}")
         print(f"new_car_x : {new_car_x}, new_car_y : {new_car_y}")
 
-        return new_car_x, new_car_y, rdx, rdy, t[min_index].position
+        return delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
 
     def __str__(self):
         return "tomareomo"
