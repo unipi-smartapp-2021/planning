@@ -6,7 +6,7 @@ from typing import List
 from LTP.TrackMap import TrackMap
 from LTP.PlanStep import PlanStep
 from LTP.Utils import euclidean_distance, find_closest_point, compute_middle_point, compute_spline
-from math import atan2, sin, cos, sqrt
+from math import atan2, sin, cos, sqrt, inf
 
 
 class Trajectory:
@@ -138,7 +138,7 @@ class Trajectory:
         num = abs(df_x * ddf_y - df_y * ddf_x)
         den = (df_x**2 + df_y**2)**(3/2)
         K = num / den
-        return 1/K
+        return 1/K if K != 0 else inf
 
     def _compute_angles(self):
         for i in range(0, len(self.trajectory)):

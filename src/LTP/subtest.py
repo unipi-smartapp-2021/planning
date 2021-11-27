@@ -6,7 +6,7 @@ def Compute_Velocity():
     rospy.init_node('Compute_Velocity', anonymous=True)
 
     def on_stub_data(ltp_data):
-        print(ltp_data)
+        print("ricevuto")
 
     rospy.Subscriber("ltp_plan", LTP_Plan, on_stub_data)        
     rospy.spin()

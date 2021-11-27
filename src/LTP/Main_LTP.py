@@ -8,8 +8,6 @@ import rospy
 import LTP.Race as rc
 
 def main():
-    #Initialize ROS node
-    rospy.init_node('ltp', anonymous=True)
 
     #read parameters from parameter server
     parameters = Parameters()
