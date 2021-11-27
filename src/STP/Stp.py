@@ -1,7 +1,7 @@
 import numpy as np
 import math
-import rospy
 from LTP.Trajectory import Trajectory
+from LTP.PlanStep import PlanStep
 
 class Car():
     ''' Car class
@@ -64,33 +64,35 @@ class STP():
         return a[0]-b[0], a[1]-b[1]
 
     def get_distance_mag(self, a, b):
-        # print("A:", a)
-        # print("B:", b)
         return math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2)
 
     def get_distance_comp(self, a, b):
         return (b[0]-a[0], b[1]-a[1])
 
     def compute_angle(self, u, v, verbose=False):
-        if verbose == True:
-            print("U = {} \n V= {}".format(u,v))
         dot_product = np.dot(u, v)
         denominator = np.linalg.norm(u)*np.linalg.norm(v)
         cosine = dot_product/denominator
-        if verbose == True:
-            print("Dot product: {}, Denominator: {}, Cosine: {}".format(dot_product, denominator, cosine))
-        return math.acos(cosine) # compute angle between car and next position. 
+        return math.acos(cosine) 
 
-    def KB_info(self, current_position, current_speed):
-        ''' Get info with [Topic] from KB for car position, speed, ecc..
-        '''
-        self.car.set_position(*current_position)
-        self.car.set_speed(*current_speed)
+    # def KB_info(self, current_position, current_speed):
+    #     ''' Get info with [Topic] from KB for car position, speed, ecc..
+    #     '''
+    #     self.car.set_position(*current_position)
+    #     self.car.set_speed(*current_speed)
 
     def update_ltp(self, data):
-        print(data.version, data.x)
-        print("andrea cojone")
-        print("giacomo dislessico")
+        p_x, p_y, v_x, v_y = data.pos_x_list, data.pos_y_list, data.vel_x_list, data.vel_y_list
+        assert(len(p_x) == len(p_y) == len(v_x) == len(v_y))
+        new_trajectory = []
+        for i in range(len(p_x)):
+            new_trajectory.append(PlanStep((p_x[i], p_y[i]), math.sqrt(v_y[i]**2 + v_x[i]**2), (v_x[i], v_y[i])))
+        self.set_trajectory(new_trajectory)
+        # TODO: new plan -> update last_plan_index variable
+        # if new plan start from current position is fine
+        # else find new closest point wrt old trajectory
+        self.last_plan_index = 0
+        
 
     def rotate(self, x, y, alpha):
         #Given the x,y, return its coordinate in the rotated axis (CCW rotation angle wrt X axis)
@@ -106,6 +108,8 @@ class STP():
         return ro, theta
 
     def compute(self):
+        if self.trajectory is None:
+            return None
         # print("Alle curve si va dritto!")
         # 1. Find next plan point
         t = self.trajectory.get_trajectory()

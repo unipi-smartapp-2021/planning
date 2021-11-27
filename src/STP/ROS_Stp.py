@@ -25,16 +25,19 @@ class RosStpNode():
         # Create publisher for Execution component
         self.actuator_pub = rospy.Publisher("stp_data", STP_Data)
         # Subscribe to topics
-        rospy.Subscriber("LTP", LTP_Plan, self.stp.update_ltp)
+        rospy.Subscriber("ltp_plan", LTP_Plan, self.stp.update_ltp)
         # rospy.subscribe("car_info", ... )
 
         while not rospy.is_shutdown():
             """
             STP using current stored data computes command that are published
             """
-            # command = self.stp.compute()
-            # self.actuator_pub.publish(command)
-            continue
+            command = self.stp.compute()
+            if command is None:
+                print("No LTP plan, can't move.")
+            else:
+                self.actuator_pub.publish(command)
+            rospy.sleep(1)
 
 if __name__ == '__main__':
     try:
