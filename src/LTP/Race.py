@@ -31,13 +31,15 @@ class Acceleration(Race):
         intra_cone_distance = self.parameters.get_intra_cone_distance()
 
         # Generate the track map given the info
-        self.track_map = StraightTrackMap(
-            race_length, race_width, race_length // intra_cone_distance, 0, 0)
+        self.track_map = TrackMap()
+        self.track_map.load_track("./src/LTP/tests/tracks/acceleration.json")
+        print(self.track_map.get_right_cones())
         # Generate the Trajectory
         self.trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
+        print(self.parameters.max_velocity_risk)
         #compute the trajectory
         self.trajectory.compute_middle_trajectory(self.track_map)
         #compute the velocities
