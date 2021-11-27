@@ -7,6 +7,7 @@ from LTP.SampleTrack import StraightTrackMap
 import LTP.RiskFunctions as risk_fun
 from LTP.ROSInterface import send_trajectory_to_ros_topic
 from planning.msg import LTP_Plan
+from rospy.client import spin
 
 
 class Race:
@@ -14,6 +15,8 @@ class Race:
         self.parameters = parameters
         # Create a Publisher to the LTP_plan topic
         self.publisher = rospy.Publisher("ltp_plan", LTP_Plan, queue_size=1)
+        #Initialize ROS node
+        rospy.init_node('ltp', anonymous=False)
 
     def race_loop():
         raise NotImplemented()
