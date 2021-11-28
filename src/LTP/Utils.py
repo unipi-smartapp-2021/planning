@@ -108,6 +108,24 @@ def compute_spline(points: List[PlanStep]):
 
     return tck, x_i,y_i,dx_i,dy_i,ddx_i,ddy_i
 
+def find_lines_intersection(line1: Tuple[float, float], line2: Tuple[float, float]) -> Tuple[float, float]:
+    # Find the intersection of two lines
+    #
+    # Args:
+    #   line1 -- a tuple (m, q) of the first line
+    #   line2 -- a tuple (m, q) of the second line
+    #
+    # Returns:
+    #   The intersection of the two lines
+    # TODO: Add check of None m values..
+    a = line1[0]
+    c = line1[1]
+    b = line2[0]
+    d = line2[1]
+    x = (d-c)/(a-b)
+    y = a*x + c
+    return x, y
+
 def find_line(p1, p2):
     """Find line between two points
 
