@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 
-from LTP.Utils import compute_distance, find_line
+from LTP.Utils import compute_distance, find_line, find_lines_intersection
 
 def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
@@ -87,24 +87,6 @@ class TrackMap:
                 return True
         return False
 
-    def find_lines_intersection(self, line1: Tuple[float, float], line2: Tuple[float, float]) -> Tuple[float, float]:
-        # Find the intersection of two lines
-        #
-        # Args:
-        #   line1 -- a tuple (m, q) of the first line
-        #   line2 -- a tuple (m, q) of the second line
-        #
-        # Returns:
-        #   The intersection of the two lines
-        # TODO: Add check of None m values..
-        a = line1[0]
-        c = line1[1]
-        b = line2[0]
-        d = line2[1]
-        x = (d-c)/(a-b)
-        y = a*x + c
-        return x, y
-
     # TODO: Also conside the track width and risk to better position the point
     # right now we are just placing it on the border..
     def force_point_inside_track(self, point: Tuple[float, float], project_line: Tuple[float, float] = None) -> Tuple[float, float]:
@@ -125,8 +107,8 @@ class TrackMap:
             for curr_left, curr_right, next_left, next_right in zip(self.left_cones, self.right_cones, self.left_cones[1:], self.right_cones[1:]):
                 m_left, q_left = find_line(curr_left, next_left)
                 m_right, q_right = find_line(curr_right, next_right)
-                intersection_left = self.find_lines_intersection((m_left, q_left), project_line)
-                intersection_right = self.find_lines_intersection((m_right, q_right), project_line)
+                intersection_left = find_lines_intersection((m_left, q_left), project_line)
+                intersection_right = find_lines_intersection((m_right, q_right), project_line)
                 if intersection_left[0] is not None and intersection_right[0] is not None:
                     middle_point = (intersection_left[0] + intersection_right[0]) / 2, (intersection_left[1] + intersection_right[1]) / 2
                     middle_point_distance = compute_distance(point, middle_point)
