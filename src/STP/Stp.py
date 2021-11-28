@@ -82,13 +82,14 @@ class STP():
     #     self.car.set_position(*current_position)
     #     self.car.set_speed(*current_speed)
 
+    # TODO: works only for no ltp plan update
     def update_ltp(self, data):
         p_x, p_y, v_x, v_y = data.pos_x_list, data.pos_y_list, data.vel_x_list, data.vel_y_list
         assert(len(p_x) == len(p_y) == len(v_x) == len(v_y))
         t = Trajectory(Parameters())
         new_trajectory = []
         for i in range(len(p_x)):
-            p = PlanStep((p_x[i], p_y[i]), round(math.sqrt(v_y[i]**2 + v_x[i]**2), 3), (v_x[i], v_y[i]))
+            p = PlanStep((p_x[i] + self.car.current_position_x, p_y[i] + self.car.current_position_y), round(math.sqrt(v_y[i]**2 + v_x[i]**2), 3), (v_x[i], v_y[i]))
             print(p)
             new_trajectory.append(p)
         t.set_trajectory(new_trajectory)
@@ -98,6 +99,10 @@ class STP():
         # else find new closest point wrt old trajectory
         self.last_plan_index = 0
         
+    # TODO: Works only for the acceleration scenario
+    def update_car_v(self, data):
+        self.car.scurrent_speed_x = data.velocity*3.6 # km/h
+        # self.car.current_speed_y = data.velocity
 
     def rotate(self, x, y, alpha):
         #Given the x,y, return its coordinate in the rotated axis (CCW rotation angle wrt X axis)
