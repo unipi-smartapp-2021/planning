@@ -2,12 +2,11 @@
 """
     Module MidTrajectory will compute the trajectory of the car
 """
-from typing import List
+from typing import List, Tuple
 from LTP.TrackMap import TrackMap
 from LTP.PlanStep import PlanStep
-from LTP.Utils import euclidean_distance, find_closest_point, compute_middle_point, compute_spline
+from LTP.Utils import euclidean_distance, find_closest_point, compute_middle_point, compute_spline, find_line
 from math import atan2, sin, cos, sqrt, inf
-
 
 class Trajectory:
     """
@@ -44,6 +43,49 @@ class Trajectory:
         for left_point in cones_left:
             right_point = cones_right[find_closest_point(left_point, cones_right, self.distance_fun)]
             self.trajectory.append(PlanStep(compute_middle_point(left_point, right_point)))
+
+    def force_inside_track(self, track_map):
+        # It forces all the points of the trajectory to be inside the track,
+        # Also it make sure that the lines connecting the points of the trajectory is inside the track map
+
+        # 1. Make sure that all the points are inside the track
+        for i in range(0, len(self.trajectory)):
+            self.trajectory[i].position = track_map.force_point_inside_track(self.trajectory[i].position)
+
+        new_trajectory = []
+
+        # 2. Make sure that the lines connecting the points are inside the track
+        # TODO: we must not consider the last point in case of a non-closed loop:
+        # e.g.: it should be len(self.trajectory) - 1 if not closed (Take this from self.parameters?)
+        for i in range(0, len(self.trajectory)):
+            # We consider two points at a time, the idea is that if the line goes outside we add middle points
+            # between the two points until the line is inside the track
+            new_trajectory = new_trajectory + self._force_line_inside_track(self.trajectory[i].position, self.trajectory[(i + 1) % len(self.trajectory)].position, track_map)
+        return new_trajectory
+
+    def _force_line_inside_track(self, curr_pos: Tuple[float, float], next_pos: Tuple[float, float], track_map) -> List[PlanStep]:
+        """
+            Force the line between two points to be inside the track
+            :param curr_pos: current position
+            :param next_pos: next position
+            :param track_map: track map
+            :return: a list of points that are inside the track
+        """
+        new_trajectory = []
+        if track_map.is_line_inside_track(curr_pos, next_pos):
+            new_trajectory = new_trajectory + [PlanStep(curr_pos)]
+        else:
+            # We need to add a middle point
+            middle_point = compute_middle_point(curr_pos, next_pos)
+            m_traj, q_traj = find_line(curr_pos, next_pos)
+            # We want to a line passing through middle_point and orthogonal to (m_traj, q_traj)
+            m_orth = -1/m_traj
+            q_orth = middle_point[0]/m_traj + middle_point[1]
+            middle_point = track_map.force_point_inside_track(middle_point, project_line = (m_orth, q_orth))
+            print("new middle point: ", middle_point)
+            new_trajectory = new_trajectory + self._force_line_inside_track(curr_pos, middle_point, track_map)
+            new_trajectory = new_trajectory + self._force_line_inside_track(middle_point, next_pos, track_map)
+        return new_trajectory
 
     def compute_velocities(self):
         """

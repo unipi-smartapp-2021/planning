@@ -6,8 +6,9 @@ from math import inf
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 import json
+import numpy as np
 
-from LTP.Utils import compute_distance
+from LTP.Utils import compute_distance, find_line
 
 def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
@@ -35,28 +36,106 @@ class TrackMap:
         self.left_cones = remove_duplicates(left_cones)
         self.right_cones = remove_duplicates(right_cones)
         self.car_position = None
+    
+    def is_line_inside_track(self, curr_pos, next_pos):
+        # Find the line between the two points
+        m, q = find_line(curr_pos, next_pos)
+        # Find all the cones in between the curr and next pos
+        x_start = min(curr_pos[0], next_pos[0])
+        x_end = max(curr_pos[0], next_pos[0])
+        N = 50 # TODO: Find a better way to do this, e.g: recursively
+        # increase the number of points until an epsilon is reached
+        for x in np.linspace(x_start, x_end, N):
+            y = m * x + q
+            if not self.is_point_inside_track((x, y)):
+                return False
+        return True
 
-    def force_inside_track(self, point: Tuple[float, float]) -> Tuple[float, float]:
+    def is_point_in_path(self, x: int, y: int, poly) -> bool:
+        # Ref: https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
+        # Determine if the point is in the polygon.
+        #
+        # Args:
+        #   x -- The x coordinates of point.
+        #   y -- The y coordinates of point.
+        #   poly -- a list of tuples [(x, y), (x, y), ...]
+        #
+        # Returns:
+        #   True if the point is in the path or is a corner or on the boundary
+        num = len(poly)
+        j = num - 1
+        c = False
+        for i in range(num):
+            if (x == poly[i][0]) and (y == poly[i][1]):
+                # point is a corner
+                return True
+            if ((poly[i][1] > y) != (poly[j][1] > y)):
+                slope = (x-poly[i][0])*(poly[j][1]-poly[i][1])-(poly[j][0]-poly[i][0])*(y-poly[i][1])
+                if slope == 0:
+                    # point is on boundary
+                    return True
+                if (slope < 0) != (poly[j][1] < poly[i][1]):
+                    c = not c
+            j = i
+        return c
+
+    def is_point_inside_track(self, point: Tuple[float, float]) -> bool:
+        # We check for every quadrilater if the point is inside it
+        for curr_left, curr_right, next_left, next_right in zip(self.left_cones, self.right_cones, self.left_cones[1:], self.right_cones[1:]):
+            poly = [curr_left, curr_right, next_right, next_left]
+            if self.is_point_in_path(point[0], point[1], poly):
+                return True
+        return False
+
+    def find_lines_intersection(self, line1: Tuple[float, float], line2: Tuple[float, float]) -> Tuple[float, float]:
+        # Find the intersection of two lines
+        #
+        # Args:
+        #   line1 -- a tuple (m, q) of the first line
+        #   line2 -- a tuple (m, q) of the second line
+        #
+        # Returns:
+        #   The intersection of the two lines
+        # TODO: Add check of None m values..
+        a = line1[0]
+        c = line1[1]
+        b = line2[0]
+        d = line2[1]
+        x = (d-c)/(a-b)
+        y = a*x + c
+        return x, y
+
+    # TODO: Also conside the track width and risk to better position the point
+    # right now we are just placing it on the border..
+    def force_point_inside_track(self, point: Tuple[float, float], project_line: Tuple[float, float] = None) -> Tuple[float, float]:
         """
             Force a point to be inside the track
         """
-        nearest_left_cone = self.get_nearest_left_cone(point)
-        nearest_right_cone = self.get_nearest_right_cone(point)
-        # Check if the point is already inside the cones
-        min_x = min(nearest_left_cone[0], nearest_right_cone[0])
-        max_x = max(nearest_left_cone[0], nearest_right_cone[0])
-        min_y = min(nearest_left_cone[1], nearest_right_cone[1])
-        max_y = max(nearest_left_cone[1], nearest_right_cone[1])
-        # If the point is outside the cones, we force it inside
-        if point[0] < min_x:
-            point = (min_x, point[1])
-        if point[0] > max_x:
-            point = (max_x, point[1])
-        if point[1] < min_y:
-            point = (point[0], min_y)
-        if point[1] > max_y:
-            point = (point[0], max_y)
-        return point
+        if not self.is_point_inside_track(point):
+            # In case we don't have a direction we just use the nearest left cone
+            if project_line is None:
+                nearest_left_cone, _ = self.get_nearest_left_cone(point)
+                nearest_right_cone, _ = self.get_nearest_right_cone(point)
+                point = (nearest_left_cone[0] + nearest_right_cone[0]) / 2, (nearest_left_cone[1] + nearest_right_cone[1]) / 2
+                return point
+            # If we have a direction we project the point on the track
+            best_middle_point = None
+            best_middle_point_distance = inf
+            # TODO: do it with an index to also consider the case of closed loops
+            for curr_left, curr_right, next_left, next_right in zip(self.left_cones, self.right_cones, self.left_cones[1:], self.right_cones[1:]):
+                m_left, q_left = find_line(curr_left, next_left)
+                m_right, q_right = find_line(curr_right, next_right)
+                intersection_left = self.find_lines_intersection((m_left, q_left), project_line)
+                intersection_right = self.find_lines_intersection((m_right, q_right), project_line)
+                if intersection_left[0] is not None and intersection_right[0] is not None:
+                    middle_point = (intersection_left[0] + intersection_right[0]) / 2, (intersection_left[1] + intersection_right[1]) / 2
+                    middle_point_distance = compute_distance(point, middle_point)
+                    if middle_point_distance < best_middle_point_distance:
+                        best_middle_point = middle_point
+                        best_middle_point_distance = middle_point_distance
+            return best_middle_point
+
+    
 
     def _compute_nearest_cone(self, position: Tuple[float, float], cones: List[Tuple[float, float]]) -> Tuple[float, float]:
         """

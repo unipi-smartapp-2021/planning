@@ -40,6 +40,7 @@ def plot_track_map(track_map, new_figure=True):
 
     if track_map.car_position is not None:
         plt.scatter(track_map.car_position[0], track_map.car_position[1], color='red', label='Car Position')
+    plt.legend()
     plt.draw()
 
 def plot_trajectory(trajectory: List[PlanStep], new_figure=False):

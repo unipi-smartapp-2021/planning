@@ -119,7 +119,7 @@ def find_line(p1, p2):
         [type]: [description]
     """
     if p1[0] == p2[0]:
-        return (p1[0], None)
+        return (0, p1[0])
     else:
         m = (p2[1] - p1[1]) / (p2[0] - p1[0])
         b = p1[1] - m * p1[0]
