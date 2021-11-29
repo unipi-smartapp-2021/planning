@@ -9,7 +9,7 @@ from LTP.SampleTrack import StraightTrackMap
 from LTP.ROSInterface import send_trajectory_to_ros_topic
 from planning.msg import LTP_Plan
 from rospy.client import spin
-
+from LTP.PlanStep import PlanStep
 
 class Race:
     def __init__(self, parameters: Parameters):
@@ -38,19 +38,32 @@ class Acceleration(Race):
         self.track_map = TrackMap()
         print(os.getcwd())
         self.track_map.load_track("./src/LTP/tests/tracks/acceleration.json")
-        # print(self.track_map.get_right_cones())
+
         # Generate the Trajectory
         self.trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
-        # print(self.parameters.max_velocity_risk)
+        ##TODO publish risk
+
         #compute the trajectory
         self.trajectory.compute_middle_trajectory(self.track_map)
         #compute the velocities
         self.trajectory.compute_velocities()
+
+        #compute breaking distance
+        vel_final = self.trajectory.get_trajectory()[-1].get_velocity()
+        breaking_distance = 0.5 * (vel_final**2)/(self.parameters.get_max_deceleration())
+
+        #add last position of trajectory and set to 0
+        self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [(0,0), (0,0)]))
+        #update velocities so that 
+        self.trajectory._bound_velocities()
+
         #send the trajectory
         send_trajectory_to_ros_topic(self.trajectory, self.publisher, LTP_Plan)
+
+        print([planstep.position for planstep in self.trajectory.trajectory])
 
 class SkidPad(Race):
     def __init__(self, parameters):
