@@ -57,14 +57,14 @@ class Acceleration(Race):
         breaking_distance = 0.5 * (vel_final**2)/(self.parameters.get_max_deceleration())
 
         #add last position of trajectory and set to 0
-        self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [(0,0), (0,0)]))
+        self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [0,0]))
         #update velocities so that 
         self.trajectory._bound_velocities()
 
         #send the trajectory
         send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
 
-        print([planstep.position for planstep in self.trajectory.trajectory])
+        #print([planstep.position for planstep in self.trajectory.trajectory])
 
 class SkidPad(Race):
     def __init__(self, parameters):
