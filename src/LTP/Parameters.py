@@ -1,5 +1,8 @@
 # parameters contains the parameters for the race
 
+#TODO consider update of these parameters (think failures)
+#TODO FORSE mettere metodo set per ogni parametro
+
 class Parameters():
     def __init__(self):
         # get parameters from knowledgebase (TODO)
