@@ -81,6 +81,7 @@ class TrackMap:
 
     def is_point_inside_track(self, point: Tuple[float, float]) -> bool:
         # We check for every quadrilater if the point is inside it
+        # TODO: Do it with an index to also consider the last poly in case of a closed loop
         for curr_left, curr_right, next_left, next_right in zip(self.left_cones, self.right_cones, self.left_cones[1:], self.right_cones[1:]):
             poly = [curr_left, curr_right, next_right, next_left]
             if self.is_point_in_path(point[0], point[1], poly):
