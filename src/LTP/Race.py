@@ -6,8 +6,8 @@ from LTP.Trajectory import Trajectory
 from LTP.TrackMap import TrackMap
 from LTP.Parameters import Parameters
 from LTP.SampleTrack import StraightTrackMap
-from LTP.ROSInterface import send_trajectory_to_ros_topic
-from planning.msg import LTP_Plan
+from LTP.ROSInterface import send_trajectory_to_ros_topic, send_risk_to_ros_topic
+from planning.msg import LTP_Plan, Risk
 from rospy.client import spin
 from LTP.PlanStep import PlanStep
 
@@ -15,7 +15,8 @@ class Race:
     def __init__(self, parameters: Parameters):
         self.parameters = parameters
         # Create a Publisher to the LTP_plan topic
-        self.publisher = rospy.Publisher("ltp_plan", LTP_Plan, queue_size=1)
+        self.trajectory_publisher = rospy.Publisher("ltp_plan", LTP_Plan, queue_size=1)
+        self.risk_publisher = rospy.Publisher("risk", Risk, queue_size=1)
         #Initialize ROS node
         rospy.init_node('ltp', anonymous=False)
 
@@ -44,7 +45,7 @@ class Acceleration(Race):
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
-        ##TODO publish risk
+        send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
 
         #compute the trajectory
         self.trajectory.compute_middle_trajectory(self.track_map)
@@ -61,7 +62,7 @@ class Acceleration(Race):
         self.trajectory._bound_velocities()
 
         #send the trajectory
-        send_trajectory_to_ros_topic(self.trajectory, self.publisher, LTP_Plan)
+        send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
 
         print([planstep.position for planstep in self.trajectory.trajectory])
 

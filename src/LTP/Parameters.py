@@ -70,6 +70,12 @@ class Parameters():
             (self.get_max_velocity() - self.get_min_velocity()) + \
             self.get_min_velocity()
 
+    def get_risk(self):
+        """
+            return current risk
+        """
+        return self.risk
+
     def set_risk(self, risk):
         """
             update the risk and its corresponding parameters

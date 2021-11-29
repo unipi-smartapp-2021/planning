@@ -17,6 +17,7 @@ add_message_files(
   STP_Data.msg
   CarlaEgoVehicleStatus.msg
   CarlaEgoVehicleControl.msg
+  Risk.msg
 )
 
 generate_messages(
