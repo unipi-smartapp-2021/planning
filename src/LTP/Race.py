@@ -38,13 +38,13 @@ class Acceleration(Race):
         self.track_map = TrackMap()
         print(os.getcwd())
         self.track_map.load_track("./src/LTP/tests/tracks/acceleration.json")
-        print(self.track_map.get_right_cones())
+        # print(self.track_map.get_right_cones())
         # Generate the Trajectory
         self.trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
-        print(self.parameters.max_velocity_risk)
+        # print(self.parameters.max_velocity_risk)
         #compute the trajectory
         self.trajectory.compute_middle_trajectory(self.track_map)
         #compute the velocities

@@ -162,9 +162,16 @@ class STP():
         # math.atan2(y,x) != math.atan(y/x) per elementi nel secondo-terzo quadrante
         # theta_1 = math.atan2(*np.flip(self.car.get_speed()))
         # print(self.car.current_speed_y/self.car.current_speed_x)
+        
+        car_v_mod, _ = self.polar_coordinates(*self.car.get_speed())
+        if car_v_mod == t[min_index].velocity == 0:
+            return -2 # Stop the car
 
         #theta is the angle between car_speed and the axis origin.
-        theta = math.atan(self.car.current_speed_y/self.car.current_speed_x)
+        if self.car.current_speed_x == 0:   # v_x = 0 -> auto going straight
+            theta = math.pi/2
+        else:
+            theta = math.atan(self.car.current_speed_y/self.car.current_speed_x)
         
         # print(f"Theta (°): {math.degrees(theta_1)}")
         print(f"Theta (°): {math.degrees(theta)}")
