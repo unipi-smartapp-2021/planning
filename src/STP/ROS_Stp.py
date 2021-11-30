@@ -56,8 +56,9 @@ class RosStpNode():
         init_car_pos = self.read_car_location()
         self.cones_offset_x, self.cones_offset_y = init_car_pos
         print(init_car_pos)
-        self.stp.set_car_pos_vel(init_car_pos, (0.1, 0))
-      
+        self.trackMap.set_car_position(init_car_pos)
+        self.stp.set_car_pos_vel(init_car_pos, (0, 0))
+
         """Ros Part
         Create topic to post commands so the actuators can receive data
         Subscribe to PewDiePie but also to LTP and possibly KB to retrieve data to be used in computation

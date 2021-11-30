@@ -101,7 +101,7 @@ class STP():
         
     # TODO: Works only for the acceleration scenario
     def update_car_v(self, data):
-        self.car.scurrent_speed_x = data.velocity*3.6 # km/h
+        self.car.scurrent_speed_x = data.velocity
         # self.car.current_speed_y = data.velocity
 
     def rotate(self, x, y, alpha):
