@@ -1,6 +1,6 @@
 from typing import List, Tuple
 from LTP.Trajectory import Trajectory
-from planning.msg import LTP_Plan
+from planning.msg import LTP_Plan, Risk
 from rospy.topics import Publisher
 
 def send_trajectory_to_ros_topic(trajectory: Trajectory, publisher : Publisher, msg_type: LTP_Plan) -> Tuple[List[float], List[float], List[float], List[float]]:
@@ -10,3 +10,6 @@ def send_trajectory_to_ros_topic(trajectory: Trajectory, publisher : Publisher, 
     vel_y = list(map(lambda vel: vel.velocity_vector[1], trajectory.get_trajectory()))
     msg = msg_type(points_x, points_y, vel_x, vel_y)
     publisher.publish(msg)
+
+def send_risk_to_ros_topic(risk: float, publisher: Publisher, msg_type: Risk):
+    publisher.publish(msg_type(risk))

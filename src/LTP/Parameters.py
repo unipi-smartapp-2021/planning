@@ -1,5 +1,8 @@
 # parameters contains the parameters for the race
 
+#TODO consider update of these parameters (think failures)
+#TODO FORSE mettere metodo set per ogni parametro
+
 class Parameters():
     def __init__(self):
         # get parameters from knowledgebase (TODO)
@@ -69,6 +72,12 @@ class Parameters():
         self.max_velocity_risk = self.risk * \
             (self.get_max_velocity() - self.get_min_velocity()) + \
             self.get_min_velocity()
+
+    def get_risk(self):
+        """
+            return current risk
+        """
+        return self.risk
 
     def set_risk(self, risk):
         """
