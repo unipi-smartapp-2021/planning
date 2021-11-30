@@ -20,7 +20,6 @@ class RaceState():
         # TODO subscribe to get current state of the race (finisched or not)
         # TODO subscribe to get current lap
         self.trackMap = TrackMap()
-        self.trackMap.load_track('tests/tracks/TarascoRace.json')
         self.finished = False
         self.current_lap = 1
 
@@ -29,7 +28,7 @@ class RaceState():
         """
         pass
 
-    def subscribe_track_map(self, callback: function):
+    def subscribe_track_map(self, callback):
         """subscribes to track map topic
 
         Args:
@@ -54,7 +53,7 @@ class RaceState():
         """
         pass
 
-    def subscribe_finisched_flag(self, callback: function):
+    def subscribe_finisched_flag(self, callback):
         """subscribes to finisched flag topic
 
         Args:
@@ -75,7 +74,7 @@ class RaceState():
         """
         return self.finished
 
-    def subscribe_current_lap(self, callback: function):
+    def subscribe_current_lap(self, callback):
         """subscribes to current lap flag topic
 
         Args:

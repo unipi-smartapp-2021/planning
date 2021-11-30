@@ -10,10 +10,12 @@ from LTP.ROSInterface import send_trajectory_to_ros_topic, send_risk_to_ros_topi
 from planning.msg import LTP_Plan, Risk
 from rospy.client import spin
 from LTP.PlanStep import PlanStep
+from LTP.RaceState import RaceState
 
 class Race:
-    def __init__(self, parameters: Parameters):
+    def __init__(self, parameters: Parameters, race_state: RaceState):
         self.parameters = parameters
+        self.race_state = race_state
         # Create a Publisher to the LTP_plan topic
         self.trajectory_publisher = rospy.Publisher("ltp_plan", LTP_Plan, queue_size=1)
         self.risk_publisher = rospy.Publisher("risk", Risk, queue_size=1)
@@ -25,8 +27,8 @@ class Race:
 
 
 class Acceleration(Race):
-    def __init__(self, parameters):
-        super().__init__(parameters)
+    def __init__(self, parameters: Parameters, race_state: RaceState):
+        super().__init__(parameters, race_state)
 
     def race_loop(self):
         # TODO: In parameters we assume to have the length and width of the Acceleration race
@@ -67,24 +69,24 @@ class Acceleration(Race):
         #print([planstep.position for planstep in self.trajectory.trajectory])
 
 class SkidPad(Race):
-    def __init__(self, parameters):
-        super().__init__(parameters)
+    def __init__(self, parameters: Parameters, race_state: RaceState):
+        super().__init__(parameters, race_state)
 
     def race_loop(self):
         pass
 
 
 class AutoCross(Race):
-    def __init__(self, parameters):
-        super().__init__(parameters)
+    def __init__(self, parameters: Parameters, race_state: RaceState):
+        super().__init__(parameters, race_state)
 
     def race_loop(self):
         pass
 
 
 class TrackDrive(Race):
-    def __init__(self, parameters):
-        super().__init__(parameters)
+    def __init__(self, parameters: Parameters, race_state: RaceState):
+        super().__init__(parameters, race_state)
 
     def race_loop(self):
         pass
