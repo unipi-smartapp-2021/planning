@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 import carla_msgs.msg
 from ACT import topics
-from ACT import PIDController
+from ACT.PIDController import PIDController
 from planning.msg import STP_Data
 from std_msgs.msg import String, Float32, Bool
 from geometry_msgs.msg import Accel
@@ -53,8 +53,7 @@ class Dispatcher():
                 carla_msgs.msg.CarlaEgoVehicleInfo, lambda data: self.log_msg(data))
 
         # STP stub subscription
-        self.stp_sub = rospy.Subscriber('/planning/stp_data', STP_Data,
-                lambda data: self.update_throttle(data))
+        self.stp_sub = rospy.Subscriber('stp_data', STP_Data, lambda data: self.update_throttle(data))
 
         # Initialize actuators states
         self.init_actuators()

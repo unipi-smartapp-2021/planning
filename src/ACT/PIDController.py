@@ -1,7 +1,7 @@
 import rospy
 import numpy as np
 import carla_msgs.msg
-from execution import topics
+import topics
 from std_msgs.msg import String, Float32, Bool
 
 # Generalize as PID controller
