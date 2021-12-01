@@ -19,7 +19,7 @@ def main():
         race = rc.Acceleration(parameters)
     elif race_type ==  'skidpad':
         race = rc.SkidPad(parameters)
-    elif race_type == 'trackdrivess':
+    elif race_type == 'trackdrive':
         race = rc.TrackDrive(parameters)
     elif race_type == 'autocross':
         race = rc.AutoCross(parameters)
