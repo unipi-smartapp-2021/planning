@@ -101,7 +101,7 @@ class STP():
         
     # TODO: Works only for the acceleration scenario
     def update_car_v(self, data):
-        self.car.scurrent_speed_x = data.velocity
+        self.car.current_speed_x = data.velocity
         # self.car.current_speed_y = data.velocity
 
     def rotate(self, x, y, alpha):
@@ -111,7 +111,9 @@ class STP():
         return X, Y
     
     def polar_coordinates(self, x, y):
-        theta = math.atan(y/x)
+        if(x == 0):
+            x+= math.pow(10,-6)
+        theta = np.round(math.atan(y/x), 4)
         if theta <= 0:
             theta += math.pi
         ro = math.sqrt(y**2 + x**2)
@@ -214,6 +216,8 @@ class STP():
         new_car_y = self.car.current_position_y + rdy
         print(f"car_x: {self.car.current_position_x}, car_y: {self.car.current_position_y}")
         print(f"new_car_x : {new_car_x}, new_car_y : {new_car_y}")
+        pos_vel_angle = self.compute_angle(self.car.get_speed(),self.car.get_position())
+        print(f"pos_vel_angle: {pos_vel_angle}")
 
         return delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
 

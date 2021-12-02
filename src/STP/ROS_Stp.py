@@ -73,7 +73,7 @@ class RosStpNode():
 
         rospy.init_node("stp_node", anonymous=True)
         rate = rospy.Rate(5)
-        self.print(None,True) # TODO: test correct print
+        #self.print(None,True) # TODO: test correct print
         while not rospy.is_shutdown():
             """
             STP using current stored data computes command that are published
