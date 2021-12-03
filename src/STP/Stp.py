@@ -129,10 +129,16 @@ class STP():
         # else find new closest point wrt old trajectory
         self.last_plan_index = 0
         
-    # TODO: Works only for the acceleration scenario
     def update_car_v(self, data):
-        self.car.current_speed_x = data.velocity
-        # self.car.current_speed_y = data.velocity
+        lin_acc_x = data.acceleration.linear.x
+        lin_acc_y = data.acceleration.linear.y
+        alpha_acc = math.atan(lin_acc_y/lin_acc_x)
+        if alpha_acc < 0:
+            alpha_acc += math.pi
+        v = data.velocity
+        v_x = data.velocity * math.cos(alpha_acc)
+        v_y = data.velocity * math.sin(alpha_acc)
+        self.car.set_speed(v_x, v_y)
 
     def rotate(self, x, y, alpha):
         #Given the x,y, return its coordinate in the rotated axis (CCW rotation angle wrt X axis)

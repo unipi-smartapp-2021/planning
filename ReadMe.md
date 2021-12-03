@@ -1,4 +1,4 @@
-# Planning v.1.1.2
+# Planning v.1.1.3
 First version of planning module.
 
 ## What does it plan?
@@ -12,15 +12,16 @@ The ROS node publishes on the topic `ltp_plan` the plan using the `LPT_Plan.msg`
 The ROS node subscribes to the following topics: `ltp_plan`, `/carla/ego_vehicle/vehicle_status`. The first one is used to read the long term plan, while the second one is provided by the simulator and is exploited to read the current speed of the car. As far as concerns the car position, since no map is provided, the car position is retrieved from an instance of the car object in the simulator (*CHEATING*). <br>
 The node also publishes the short term plan in the topic `stp_data` using the `STP_Data.msg` message. It provides 3 values: <ul>
     <li><em>status</em>: racing (0), stop (1)</li>
+    <li><em>psi</em>: angle between canonical y axis and plan</li>
     <li><em>dt</em>: delta theta = variation steering angle</li>
     <li><em>dv</em>: delta velocity = variation wrt to current speed</li></ul>
-    <li><em>dv</em>: psi = angle between canonical y axis and plan</li></ul>
+
 ## How to run
 Following the next steps is possible to run an instance of the planning module that interfaces with the Carla simulator.
 1. Start the simulator
 2. Start the `ROS_Stp.py` node
-3. Start the `Main_LTP.py` node
+3. Start the `dispatcher.py` node
+4. Start the `Main_LTP.py` node (**NB.** Due to a relative path run the rosnode while `planning/` is the current working directoy)
  
 Upon starting the ROS_Stp node will start reading the car speed and print some log info and send information on its topic.<br>
-Once the Main_LTP node sends the long term plan on the topic the ROS_Stp node will start computing the actual commands with a `5Hz rate`. The output will remain the same until some changes to the car status are made.<br>
-In this scenario the car does not move by itself, but moving the car with manual drive it is possible to see how the log information of the STP module adapts wrt current car position and speed.
+Once the Main_LTP node sends the long term plan on the topic the ROS_Stp node will start computing the actual commands with a `5Hz rate`. The output will remain the same until some changes to the car status are made.
