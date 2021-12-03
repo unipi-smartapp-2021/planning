@@ -20,24 +20,54 @@ class Car():
         self.current_speed_y = 0.1
 
     def get_position(self):
+        """
+        Return current position of the car
+
+        Returns:
+            numpy array: tuple of x coordinate and y coordinate
+        """        
         return np.array([self.current_position_x, self.current_position_y])
     
     def set_position(self, x, y):
+        """Setter function to set car position for each update
+
+        Args:
+            x (float): x coordinate
+            y (float): y coordinate
+        """        
         self.current_position_x = x
         self.current_position_y = y
     
     def get_speed(self):
+        """
+        Return current car speed
+
+        Returns:
+            numpy array: tuple of speed components x and y
+        """        
         return np.array([self.current_speed_x, self.current_speed_y])
     
     def set_speed(self, x, y):
+        """Setter function to set car speed for each update
+
+        Args:
+            x (float): x component
+            y (float): y component
+        """   
         self.current_speed_x = x
         self.current_speed_y = y
 
 class STP():
+    """
+    STP module class. 
+    Description: This module takes information from the LTP module and based on the given plan and the infomration coming from the car position,
+    tries to identify itself in the space and to follow the path provvided by the LTP planner.
+    """    
     def __init__(self):
         self.trajectory = None
         self.car = Car()
         self.last_plan_index = 0
+        self.debug=False
     
     def callback(self,data):
         print(f"I received: {data}")
@@ -111,10 +141,13 @@ class STP():
         return X, Y
     
     def polar_coordinates(self, x, y):
+        x = round(x, 1)
+        y = round(y, 1)
         if(x == 0):
-            x+= math.pow(10,-6)
-        theta = np.round(math.atan(y/x), 4)
-        if theta <= 0:
+            theta= np.sign(y) * math.pi/2
+        else:
+            theta = np.round(math.atan(y/x), 4)
+        if theta < 0:
             theta += math.pi
         ro = math.sqrt(y**2 + x**2)
         return ro, theta
@@ -160,7 +193,7 @@ class STP():
         print(f"car_pos: {self.car.get_position()}, car_v: {self.car.get_speed()}")
         print(f"plan_pos: {t[min_index].position}, plan_v: {t[min_index].velocity_vector}, plan_index: {min_index}")
         dist = self.get_distance_comp(self.car.get_position(), t[min_index].position)
-        print(f"dist_comp: {dist}")
+        # print(f"dist_comp: {dist}")
         # math.atan2(y,x) != math.atan(y/x) per elementi nel secondo-terzo quadrante
         # theta_1 = math.atan2(*np.flip(self.car.get_speed()))
         # print(self.car.current_speed_y/self.car.current_speed_x)
@@ -171,11 +204,10 @@ class STP():
 
         #theta is the angle between car_speed and the axis origin.
         if self.car.current_speed_x == 0:   # v_x = 0 -> auto going straight
-            theta = math.pi/2
+            theta = 0
         else:
             theta = math.atan(self.car.current_speed_y/self.car.current_speed_x)
-        
-        # print(f"Theta (°): {math.degrees(theta_1)}")
+    
         print(f"Theta (°): {math.degrees(theta)}")
         alpha = 0
         if self.car.get_speed()[0] >= 0: #Check if the x component of car speed is positive 
@@ -196,30 +228,38 @@ class STP():
         real_module, real_angle = self.polar_coordinates(*real)
         car_v_r_module, car_v_r_angle = self.polar_coordinates(*car_v_r)
         print(f"real_angle: {math.degrees(real_angle)}, real_module: {real_module}")
-        print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
+        # print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
         delta_theta = car_v_r_angle - real_angle
-        print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
+        #print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
         delta_v = t[min_index].velocity - car_v_r_module
-        print(f"delta_v: {delta_v}")
-        
-        # define simulation
+        #print(f"delta_v: {delta_v}")
+        #psi = Angolo tra real e asse y canonico FORCONE
+        real_canonic = self.rotate(*real, -alpha)
+        print(f"real_canonic' : {real_canonic}")
+        _ , mmt = self.polar_coordinates(*real_canonic)
+        print(f"mmt: {math.degrees(mmt)}")
+        psi = math.pi/2 - mmt
+        print(f"psi_angle' : {math.degrees(psi)}")
+
+        # define custom simulation (To delete)
         new_car_module = car_v_r_module + delta_v/2
-        print(f"new_car_module : {new_car_module}")
+        # print(f"new_car_module : {new_car_module}")
         new_car_angle = car_v_r_angle - delta_theta
-        print(f"new_car_angle : {math.degrees(new_car_angle)}")
+        # print(f"new_car_angle : {math.degrees(new_car_angle)}")
         d_vx = new_car_module * math.cos(new_car_angle)
         d_vy = new_car_module * math.sin(new_car_angle)
-        print(f"dx: {d_vx}, dy: {d_vy}")
+        # print(f"dx: {d_vx}, dy: {d_vy}")
         rdx, rdy = self.rotate(d_vx, d_vy, -alpha)
-        print(f"rdx: {rdx}, rdy: {rdy}")
+        # print(f"rdx: {rdx}, rdy: {rdy}")
+        
         new_car_x = self.car.current_position_x + rdx
         new_car_y = self.car.current_position_y + rdy
-        print(f"car_x: {self.car.current_position_x}, car_y: {self.car.current_position_y}")
-        print(f"new_car_x : {new_car_x}, new_car_y : {new_car_y}")
+        # print(f"car_x: {self.car.current_position_x}, car_y: {self.car.current_position_y}")
+        # print(f"new_car_x : {new_car_x}, new_car_y : {new_car_y}")
         pos_vel_angle = self.compute_angle(self.car.get_speed(),self.car.get_position())
-        print(f"pos_vel_angle: {pos_vel_angle}")
+        # print(f"pos_vel_angle: {pos_vel_angle}")
 
-        return delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
+        return psi, delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
 
     def __str__(self):
         return "tomareomo"

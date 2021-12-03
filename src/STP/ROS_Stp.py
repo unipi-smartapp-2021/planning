@@ -81,19 +81,20 @@ class RosStpNode():
             command = self.stp.compute()
             if command is None:
                 rospy.loginfo("No LTP plan, can't move.")
-                self.actuator_pub.publish(0, 0, 0)
+                self.actuator_pub.publish(0, 0, 0, 0)
             elif command == -1:
                 rospy.loginfo("End of plan. Wtf should I do?")
-                self.actuator_pub.publish(1, 0, -math.inf)
+                self.actuator_pub.publish(1, 0, 0, -math.inf)
                 exit()
             elif command == -2:
                 rospy.loginfo("Enter final stop state.")
-                self.actuator_pub.publish(1, 0, -math.inf)
+                self.actuator_pub.publish(1, 0, 0, -math.inf)
                 exit()
             else:
-                # rospy.loginfo(f"dt: {command[0]} - dv: {command[1]}")               
-                self.actuator_pub.publish(0, command[0], command[1])
-                new_car_x, new_car_y, rdx, rdy, plan_ref = command[2:]
+                psi, dt, dv = command[0], command[1], command[2]
+                rospy.loginfo(f"psi: {math.degrees(psi)} - dt: {dt} - dv: {dv}")
+                self.actuator_pub.publish(0, psi, dt, dv)
+                new_car_x, new_car_y, rdx, rdy, plan_ref = command[3:]
                 self.stp.car.set_position(*self.read_car_location())
                 self.trackMap.set_car_position((new_car_x,new_car_y))
                 # self.print(plan_ref)

@@ -1,4 +1,4 @@
-# Planning v.1.0.0
+# Planning v.1.1.2
 First version of planning module.
 
 ## What does it plan?
@@ -14,7 +14,7 @@ The node also publishes the short term plan in the topic `stp_data` using the `S
     <li><em>status</em>: racing (0), stop (1)</li>
     <li><em>dt</em>: delta theta = variation steering angle</li>
     <li><em>dv</em>: delta velocity = variation wrt to current speed</li></ul>
-
+    <li><em>dv</em>: psi = angle between canonical y axis and plan</li></ul>
 ## How to run
 Following the next steps is possible to run an instance of the planning module that interfaces with the Carla simulator.
 1. Start the simulator
