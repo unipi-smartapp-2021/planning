@@ -1,16 +1,18 @@
 import rospy
 import numpy as np
 import carla_msgs.msg
-import topics
+from execution import topics
 from std_msgs.msg import String, Float32, Bool
 
 # Generalize as PID controller
 class PIDController():
-    def __init__(self, value=0.0, Kp = 4.0, Ki = 3.0, Kd = 1.5):
+    def __init__(self, value=0.0, Kp = 4.0, Ki = 3.0, Kd = 1.5, minv = 0, maxv = 1):
         self.value = value
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
+        self.minv = minv
+        self.maxv = maxv
         self.error = np.zeros(3)
         # TODO: make this of fixed size by truncating it at each step
         self.outputs = np.array([self.get_value()])
@@ -59,8 +61,8 @@ class PIDController():
         self.outputs = np.append(self.outputs, output)
 
         # set upper and lower limits
-        output = max(0, output)
-        output = min(1, output)
+        output = max(self.minv, output)
+        output = min(self.maxv, output)
         return output
 
     def pid_loop(self, target, max_iter=300, verbose=True):
