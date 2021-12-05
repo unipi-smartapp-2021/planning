@@ -31,9 +31,6 @@ class Acceleration(Race):
     def race_loop(self):
         # TODO: In parameters we assume to have the length and width of the Acceleration race
         # TODO think when the track finishes
-        race_length = self.parameters.get_track_length()
-        race_width = self.parameters.get_track_width()
-        intra_cone_distance = self.parameters.get_intra_cone_distance()
 
         # Generate the track map given the info
         self.track_map = TrackMap()
@@ -58,8 +55,15 @@ class Acceleration(Race):
 
         #add last position of trajectory and set to 0
         self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [0,0]))
-        #update velocities so that 
+        #update velocities so that we sure we stop
         self.trajectory._bound_velocities()
+
+        #add 0 velocity points for 50 meters every STEP meters
+        STEP = 5
+        METERS_END = self.parameters.get_acc_track_dec_length() + breaking_distance
+
+        for i in range(1, int(METERS_END//STEP)):
+            self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] + STEP, 0), 0, [0,0]))
 
         #send the trajectory
         send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
