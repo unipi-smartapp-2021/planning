@@ -91,8 +91,9 @@ class Dispatcher():
     def update_control(self, data):
         # Get target velocity
         self.target_velocity = self.current_velocity + data.dv
-        self.target_zorient = data.psi - np.pi/2.0
+        self.target_zorient = data.psi - data.dt
         # self.target_zorient = 0.0
+        rospy.loginfo('current psi: {:.3f}\t current dt: {:.3}'.format(data.psi, data.dt))
         rospy.loginfo('current z: {:.3f}\t target z: {:.3}'.format(self.current_zorient, self.target_zorient))
         rospy.loginfo('current v: {:.3f}\t target v: {:.3}'.format(self.current_velocity, self.target_velocity))
         # Vehicle Control message

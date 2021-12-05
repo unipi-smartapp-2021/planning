@@ -68,7 +68,7 @@ class RosStpNode():
         self.actuator_pub = rospy.Publisher("stp_data", STP_Data, queue_size=10)
         # Subscribe to topics
         rospy.Subscriber("ltp_plan", LTP_Plan, self.stp.update_ltp)
-        rospy.Subscriber("/carla/ego_vehicle/vehicle_status", CarlaEgoVehicleStatus, self.stp.update_car_v)
+        rospy.Subscriber("/carla/ego_vehicle/vehicle_status", CarlaEgoVehicleStatus, self.stp.update_car_status)
         # rospy.subscribe("car_info", ... )
 
         rospy.init_node("stp_node", anonymous=True)

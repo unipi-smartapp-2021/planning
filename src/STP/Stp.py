@@ -3,6 +3,7 @@ import math
 from LTP.Trajectory import Trajectory
 from LTP.PlanStep import PlanStep
 from LTP.Parameters import Parameters
+from ACT.geometry import quaternion_to_euler
 
 class Car():
     ''' Car class
@@ -18,6 +19,7 @@ class Car():
         self.current_position_y = 0
         self.current_speed_x = 0.1
         self.current_speed_y = 0.1
+        self.orientation = 0.0
 
     def get_position(self):
         """
@@ -128,17 +130,30 @@ class STP():
         # if new plan start from current position is fine
         # else find new closest point wrt old trajectory
         self.last_plan_index = 0
+
+    def update_car_status(self, data):
+        q = data.orientation
+        (x, y, z) = quaternion_to_euler(q.x, q.y, q.z, q.w)
+        self.car.orientation = z
+        car_vx = data.velocity * math.cos(z)
+        car_vy = data.velocity * math.sin(z)
+        self.car.set_speed(car_vx, car_vy)
         
-    def update_car_v(self, data):
-        lin_acc_x = data.acceleration.linear.x
-        lin_acc_y = data.acceleration.linear.y
-        alpha_acc = math.atan(lin_acc_y/lin_acc_x)
-        if alpha_acc < 0:
-            alpha_acc += math.pi
-        v = data.velocity
-        v_x = data.velocity * math.cos(alpha_acc)
-        v_y = data.velocity * math.sin(alpha_acc)
-        self.car.set_speed(v_x, v_y)
+    # def update_car_v(self, data):
+    #     # lin_acc_x = round(data.acceleration.linear.x, 2)
+    #     # lin_acc_y = round(data.acceleration.linear.y, 2)
+    #     # alpha_acc = math.atan(lin_acc_y/lin_acc_x)
+    #     # if alpha_acc < 0:
+    #     #     alpha_acc += math.pi
+    #     # v_x = data.velocity * math.cos(alpha_acc)
+    #     # v_y = data.velocity * math.sin(alpha_acc)
+    #     # self.car.set_speed(v_x, v_y)
+    #     # print(f"Lin_acc: x({lin_acc_x}, y({lin_acc_y})")
+    #     # print(f"Orientation: \n{data.orientation}")
+    #     self.car.set_speed(data.velocity, 0)
+
+    # def update_orientation(self, data):
+    #     self.car.orientation = quaternion_to_euler(data.orientation)[-1]
 
     def rotate(self, x, y, alpha):
         #Given the x,y, return its coordinate in the rotated axis (CCW rotation angle wrt X axis)
@@ -147,9 +162,9 @@ class STP():
         return X, Y
     
     def polar_coordinates(self, x, y):
-        x = round(x, 1)
-        y = round(y, 1)
-        if(x == 0):
+        # x = round(x, 1)
+        # y = round(y, 1)
+        if abs(x) <= 1e-5:
             theta= np.sign(y) * math.pi/2
         else:
             theta = np.round(math.atan(y/x), 4)
@@ -168,19 +183,12 @@ class STP():
         index = self.last_plan_index%len(t)
         d = math.inf
         min_index = index
-        first = True
         while True:
-            if index == self.last_plan_index:
-                if not first:
-                    print("Loop all plan and no point was found.")
-                    return -1
-                else:
-                    first = False
             curr_p = t[index]
             dist = self.get_distance_mag(self.car.get_position(), curr_p.position)
             dist_c = self.get_distance_comp(self.car.get_position(), curr_p.position)
             psi = self.compute_angle(self.car.get_speed(), dist_c)
-            print(f"index: {index} - car_pos: {self.car.get_position()}, plan_pos: {curr_p.position}, distance: {dist}, psi: {math.degrees(psi)}, cur_min_d: {d}")
+            print(f"index: {index} - car_pos: {self.car.get_position()}, car_speed: {self.car.get_speed()}, plan_pos: {curr_p.position}, distance: {dist}, psi: {math.degrees(psi)}, cur_min_d: {d}")
             if psi >= math.pi/2: # discard point behind
                 index = (index+1)%len(t)
                 continue
@@ -221,31 +229,32 @@ class STP():
         else:
             alpha = math.pi/2 + theta
             
-        print(f"Alpha (°): {math.degrees(alpha)}")
         car_v_r = self.rotate(*self.car.get_speed(), alpha)
         plan_v_r = self.rotate(*t[min_index].velocity_vector, alpha)
         dist_r = self.rotate(*dist, alpha)
-        print(f"car_v_r: {car_v_r}")
-        print(f"plan_v_r: {plan_v_r}")
         optimal = np.add(dist_r, plan_v_r)
-        print(f"optimal: {optimal}")        
         real = np.add(optimal, car_v_r)
-        print(f"real: {real}")
         real_module, real_angle = self.polar_coordinates(*real)
         car_v_r_module, car_v_r_angle = self.polar_coordinates(*car_v_r)
+        print(f"Alpha (°): {math.degrees(alpha)}")
+        print(f"car_v_r: {car_v_r}")
+        print(f"plan_v_r: {plan_v_r}")
+        print(f"optimal: {optimal}")        
+        print(f"real: {real}")
         print(f"real_angle: {math.degrees(real_angle)}, real_module: {real_module}")
-        # print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
+        print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
         delta_theta = car_v_r_angle - real_angle
-        #print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
+        print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
         delta_v = t[min_index].velocity - car_v_r_module
-        #print(f"delta_v: {delta_v}")
-        #psi = Angolo tra real e asse y canonico FORCONE
-        real_canonic = self.rotate(*real, -alpha)
-        print(f"real_canonic' : {real_canonic}")
-        _ , mmt = self.polar_coordinates(*real_canonic)
-        print(f"mmt: {math.degrees(mmt)}")
-        psi = math.pi/2 - mmt
-        print(f"psi_angle' : {math.degrees(psi)}")
+        print(f"delta_v: {delta_v}")
+
+        # #psi = Angolo tra real e asse y canonico FORCONE
+        # real_canonic = self.rotate(*real, -alpha)
+        # print(f"real_canonic' : {real_canonic}")
+        # _ , mmt = self.polar_coordinates(*real_canonic)
+        # print(f"mmt: {math.degrees(mmt)}")
+        # psi = math.pi/2 - mmt
+        # print(f"psi_angle' : {math.degrees(psi)}")
 
         # define custom simulation (To delete)
         new_car_module = car_v_r_module + delta_v/2
@@ -265,7 +274,7 @@ class STP():
         pos_vel_angle = self.compute_angle(self.car.get_speed(),self.car.get_position())
         # print(f"pos_vel_angle: {pos_vel_angle}")
 
-        return psi, delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
+        return self.car.orientation, delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
 
     def __str__(self):
         return "tomareomo"
