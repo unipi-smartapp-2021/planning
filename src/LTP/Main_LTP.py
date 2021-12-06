@@ -15,6 +15,9 @@ def main():
     
     #read current race type from parameters
     race_type = parameters.get_race_type()
+
+    # TODO: just for test.
+    race_type = 'simplecurve'
     
     # create race
     if race_type == 'acceleration':
@@ -25,6 +28,8 @@ def main():
         race = rc.TrackDrive(parameters, race_state)
     elif race_type == 'autocross':
         race = rc.AutoCross(parameters, race_state)
+    elif race_type == 'simplecurve':
+        race = rc.TestCurve(parameters, race_state)
     else:
         raise ValueError(f"Race type: {parameters.get_race_type()} doesn't exist.")
         
