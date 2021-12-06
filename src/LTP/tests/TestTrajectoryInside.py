@@ -1,13 +1,13 @@
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#import os, sys
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from SampleTrack import CircleTrackMap
-from Trajectory import Trajectory
-from Parameters import Parameters
-from GraphicUtility import plot_track_map, plot_trajectory, end_plotting
-from PlanStep import PlanStep
+from LTP.SampleTrack import CircleTrackMap
+from LTP.Trajectory import Trajectory
+from LTP.Parameters import Parameters
+from LTP.GraphicUtility import plot_track_map, plot_trajectory, end_plotting
+from LTP.PlanStep import PlanStep
 import random
-from TrackMap import TrackMap
+from LTP.TrackMap import TrackMap
 
 random.seed(1)
 
