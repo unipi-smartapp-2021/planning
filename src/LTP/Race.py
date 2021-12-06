@@ -94,3 +94,35 @@ class TrackDrive(Race):
 
     def race_loop(self):
         pass
+
+
+class TestCurve(Race):
+    def __init__(self, parameters: Parameters, race_state: RaceState):
+        super().__init__(parameters, race_state)
+
+    def race_loop(self):
+        race_length = self.parameters.get_track_length()
+        race_width = self.parameters.get_track_width()
+        intra_cone_distance = self.parameters.get_intra_cone_distance()
+
+        # Generate the track map given the info
+        self.track_map = TrackMap()
+        print(os.getcwd())
+        self.track_map.load_track("./src/LTP/tests/tracks/simplecurve.json")
+
+        # Generate the Trajectory
+        self.trajectory = Trajectory(self.parameters)
+        #set the risk to the maximum possible
+        self.parameters.set_risk(risk_fun.constant(
+            1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
+        send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
+
+        #compute the trajectory
+        self.trajectory.compute_middle_trajectory(self.track_map)
+        #compute the velocities
+        self.trajectory.compute_velocities()
+
+        #send the trajectory
+        send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+
+        #print([planstep.position for planstep in self.trajectory.trajectory])
