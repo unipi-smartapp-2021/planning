@@ -6,7 +6,7 @@ import numpy as np
 import carla_msgs.msg
 from ACT import topics
 from ACT.PIDController import PIDController
-from ACT.geometry import quaternion_to_euler
+from tf.transformations import euler_from_quaternion
 from planning.msg import STP_Data
 from std_msgs.msg import String, Float32, Bool
 from geometry_msgs.msg import Accel
@@ -23,12 +23,16 @@ class Dispatcher():
         self.last_cmd = None
 
         # Controllers
-        self.velocity_control = PIDController(self.current_velocity,
+        self.velocity_control = PIDController(0.0,
                 Kp=3.0, Ki=1.5, Kd=0.0, minv=0, maxv=1)
-        self.steering_control = PIDController(self.current_zorient,
-                Kp=0.6, Ki=0.3, Kd=0.0, minv=-0.9, maxv=0.9)
-        self.braking_control = PIDController(self.current_zorient,
-                Kp=5.5, Ki=1.5, Kd=0.0, minv=0.0, maxv=1.0)
+
+        self.steering_control = PIDController(0.0,
+                Kp=2.0, Ki=1.0, Kd=0.0, minv=-1.0, maxv=1.0,
+                guard=0.01,
+                verbose=True)
+
+        self.braking_control = PIDController(0.0,
+                Kp=6.5, Ki=1.5, Kd=0.0, minv=0.0, maxv=1.0)
 
         # Steering wheel
         self.steer_enable_pub = rospy.Publisher(topics.STEER_ENABLE, Bool)
@@ -81,19 +85,24 @@ class Dispatcher():
         self.last_cmd = data
 
     def update_status(self, data):
-        # rospy.loginfo(data)
         # get current linear (forward) velocity
         self.current_velocity = data.velocity
         q = data.orientation
-        (x, y, z) = quaternion_to_euler(q.x, q.y, q.z, q.w)
+        (x, y, z) = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.current_zorient = z
 
     def update_control(self, data):
         # Get target velocity
         self.target_velocity = self.current_velocity + data.dv
+
+        # This fixes the buggy behaviour of the STP at the start
+        if self.current_velocity <= 1e-2:
+            data.dt = 0.0
+
         self.target_zorient = data.psi - data.dt
         # self.target_zorient = 0.0
-        rospy.loginfo('current psi: {:.3f}\t current dt: {:.3}'.format(data.psi, data.dt))
+        rospy.loginfo('current dv: {:.3f}'.format(data.dv))
+        rospy.loginfo('current psi: {:.3f}\t target dt: {:.3}'.format(data.psi, data.dt))
         rospy.loginfo('current z: {:.3f}\t target z: {:.3}'.format(self.current_zorient, self.target_zorient))
         rospy.loginfo('current v: {:.3f}\t target v: {:.3}'.format(self.current_velocity, self.target_velocity))
         # Vehicle Control message
@@ -119,7 +128,7 @@ class Dispatcher():
         self.cmd_pub.publish(cmd)
 
     def spin(self):
-        rate = rospy.Rate(15) # 100hz
+        rate = rospy.Rate(50) # 100hz
         while not rospy.is_shutdown():
             if self.last_cmd:
                 self.update_control(self.last_cmd)

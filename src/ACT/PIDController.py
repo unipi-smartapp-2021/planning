@@ -3,7 +3,8 @@ import numpy as np
 
 # Generalize as PID controller
 class PIDController():
-    def __init__(self, value=0.0, Kp = 4.0, Ki = 3.0, Kd = 1.5, minv = 0, maxv = 1):
+    def __init__(self, value=0.0, Kp = 4.0, Ki = 3.0, Kd = 1.5,
+            minv = 0, maxv = 1, guard=1.0, verbose=False):
         self.value = value
         self.Kp = Kp
         self.Ki = Ki
@@ -11,6 +12,9 @@ class PIDController():
         self.minv = minv
         self.maxv = maxv
         self.error = np.zeros(3)
+        self.integral = 0.0
+        self.verbose = verbose
+        self.guard = guard
         # TODO: make this of fixed size by truncating it at each step
         self.outputs = np.array([self.get_value()])
         self.last_time = None
@@ -47,19 +51,29 @@ class PIDController():
 
         self.last_time = rospy.get_time()
 
-        A0 = self.Kp + self.Ki*dt + self.Kd/dt
-        A1 = -self.Kp - 2*self.Kd/dt
-        A2 = self.Kd/dt
+        e = target - current
+        P = self.Kp * e
+        I = self.integral + self.Ki * e * dt
+        D = self.Kd * (e - self.error[-1])/dt
 
-        self.error[2] = self.error[1]
-        self.error[1] = self.error[0]
-        self.error[0] = target - current
-        output = self.outputs[-1] + A0 * self.error[0] + A1 * self.error[1] + A2 * self.error[2]
-        self.outputs = np.append(self.outputs, output)
+        # anti wind-up
+        I = max(-self.guard, I)
+        I = min(self.guard, I)
 
+        self.integral = I
+        self.error[-1] = e
+        output = P + I + D
+
+        if self.verbose:
+            rospy.loginfo('PID: P={:.3f} I={:.3f} D={:.3f}'.format(P, I, D))
+            rospy.loginfo('PID: error={:.3f}'.format(e))
+        
         # set upper and lower limits
         output = max(self.minv, output)
         output = min(self.maxv, output)
+
+        self.outputs = np.append(self.outputs, output)
+
         return output
 
     def pid_loop(self, target, max_iter=300, verbose=True):
