@@ -1,4 +1,4 @@
-# Planning v.1.1.3
+# Planning v.1.2.0
 First version of planning module.
 
 ## What does it plan?
@@ -12,7 +12,7 @@ The ROS node publishes on the topic `ltp_plan` the plan using the `LPT_Plan.msg`
 The ROS node subscribes to the following topics: `ltp_plan`, `/carla/ego_vehicle/vehicle_status`. The first one is used to read the long term plan, while the second one is provided by the simulator and is exploited to read the current speed of the car. As far as concerns the car position, since no map is provided, the car position is retrieved from an instance of the car object in the simulator (*CHEATING*). <br>
 The node also publishes the short term plan in the topic `stp_data` using the `STP_Data.msg` message. It provides 3 values: <ul>
     <li><em>status</em>: racing (0), stop (1)</li>
-    <li><em>psi</em>: angle between canonical y axis and plan</li>
+    <li><em>psi</em>: car orientation wrt z axis</li>
     <li><em>dt</em>: delta theta = variation steering angle</li>
     <li><em>dv</em>: delta velocity = variation wrt to current speed</li></ul>
 
