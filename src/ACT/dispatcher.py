@@ -99,7 +99,7 @@ class Dispatcher():
         if self.current_velocity <= 1e-2:
             data.dt = 0.0
 
-        self.target_zorient = data.psi - data.dt
+        self.target_zorient = -data.psi + data.dt
         # self.target_zorient = 0.0
         rospy.loginfo('current dv: {:.3f}'.format(data.dv))
         rospy.loginfo('current psi: {:.3f}\t target dt: {:.3}'.format(data.psi, data.dt))

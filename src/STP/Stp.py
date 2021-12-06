@@ -70,17 +70,29 @@ class STP():
         self.car = Car()
         self.last_plan_index = 0
         self.debug=False
-    
-    def callback(self,data):
-        print(f"I received: {data}")
 
     def set_trajectory(self, t):
+        """Setter method for the planner trajectory
+        Args:
+            t (trajectory): []
+        """        
         self.trajectory = t
 
     def get_trajectory(self):
+        """Getter method for trajectory
+
+        Returns:
+            [trajectory]: [description]
+        """        
         return self.trajectory
 
     def set_car_pos_vel(self, position, speed):
+        """Setter for car position and velocity
+
+        Args:
+            position (Tuple of positions x,y): [Position on x and y axis]
+            speed (Tuple of speeds Vx, Vy): [Velocity on x and y axis]
+        """        
         self.car.set_position(*position)
         self.car.set_speed(*speed)
 
@@ -243,7 +255,7 @@ class STP():
         print(f"real: {real}")
         print(f"real_angle: {math.degrees(real_angle)}, real_module: {real_module}")
         print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
-        delta_theta = car_v_r_angle - real_angle
+        delta_theta = 0.5 * (car_v_r_angle - real_angle)
         print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
         delta_v = t[min_index].velocity - car_v_r_module
         print(f"delta_v: {delta_v}")
