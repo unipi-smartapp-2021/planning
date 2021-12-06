@@ -45,7 +45,8 @@ class Parameters():
         self.RACE_TYPE = "acceleration"  # type of race
 
         # length of the race in meters (only for acceleration)
-        self.TRACK_LENGTH = 75
+        self._ACC_TRACK_ACC_LENGTH = 75 #length of the acceleration phase in acceleration race
+        self.ACC_TRACK_DEC_LENGTH = 100 #length of the deceleration phase in acceleration race
 
         self.TRACK_WIDTH = 3  # width of the track
 
@@ -146,8 +147,11 @@ class Parameters():
     def get_max_deceleration(self):
         return self.MAX_DECELERATION
 
-    def get_track_length(self):
-        return self.TRACK_LENGTH
+    def get_acc_track_acc_length(self):
+        return self.ACC_TRACK_ACC_LENGTH
+    
+    def get_acc_track_dec_length(self):
+        return self.ACC_TRACK_DEC_LENGTH
 
     def get_track_width(self):
         return self.TRACK_WIDTH

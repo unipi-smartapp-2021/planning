@@ -1,14 +1,11 @@
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from LTP.Trajectory import Trajectory
+from LTP.GraphicUtility import plot_track_map, plot_trajectory, end_plotting
+from LTP.TrackMap import TrackMap
+from LTP.Utils import serialize_to_file, euclidean_distance_no_sqrt
+from LTP.RiskFunctions import risk_laps
 
-from Trajectory import Trajectory
-from GraphicUtility import plot_track_map, plot_trajectory, end_plotting
-from TrackMap import TrackMap
-from Utils import serialize_to_file, euclidean_distance_no_sqrt
-from RiskFunctions import risk_laps
-
-from Parameters import Parameters
-from RaceState import RaceState
+from LTP.Parameters import Parameters
+from LTP.RaceState import RaceState
 import time
 
 NAME_TEST = "TestCustomTrack1"
@@ -16,7 +13,7 @@ NAME_TEST = "TestCustomTrack1"
 start_time = time.time()
 
 custom_track = TrackMap()
-custom_track.load_track('tests/tracks/TarascoRace.json')
+custom_track.load_track('src/LTP/tests/tracks/TarascoRace.json')
 
 custom_track.set_car_position((298, 235))
 

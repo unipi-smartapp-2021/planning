@@ -44,6 +44,11 @@ catkin_install_python(PROGRAMS
   src/STP/Stp.py 
   src/STP/publisher.py
   src/STP/subscriber.py
+
+  src/ACT/dispatcher.py
+  src/ACT/PIDController.py
+  src/ACT/setup.py
+  src/ACT/topics.py
   
   src/LTP/Bernstein.py
   src/LTP/GraphicUtility.py
