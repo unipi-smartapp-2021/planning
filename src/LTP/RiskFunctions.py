@@ -2,6 +2,19 @@
     Define risk functions
 """
 
+# TODO: Implement me..
+def compute_risk_acceleration() -> float:
+    pass
+
+def compute_risk_trackdrive() -> float:
+    pass
+
+def compute_risk_autocross() -> float:
+    pass
+
+def compute_risk_skidpad() -> float:
+    pass
+
 def risk_laps(current_lap: int, num_laps: int, min_risk: float, max_risk: float):
     """
         Compute Risk based on number of laps

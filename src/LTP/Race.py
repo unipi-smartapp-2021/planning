@@ -89,13 +89,14 @@ class AutoCross(Race):
             if self.race_state.track_map_updated == True:
                 track_map = self.race_state.get_track_map()
                 self.trajectory = Trajectory(self.parameters)
-                #set the risk to the maximum possible
-                self.parameters.set_risk(risk_fun.constant(
-                    1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
-                send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
+                # update risk
+                risk = risk_fun.compute_risk_autocross()
+                # TODO: Does the line below also update the risk the compute_velocity function will read from the Parameters?
+                # in theory yes but we should check once we'll have the real ParameterServer
+                send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
 
-                #compute the trajectory
-                self.trajectory.compute_middle_trajectory(self.track_map)
+                # Compute the trajectory
+                self.trajectory.compute_middle_trajectory(track_map)
                 #compute the velocities
                 self.trajectory.compute_velocities()
 
@@ -108,16 +109,23 @@ class TrackDrive(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        # Until the race is going (read state?)
-        while racing:
-            # Stay blocked for new track map updates
-            track_map = read_track_map()
-            # We probably want to read if this is the final track (closed-loop) and in case not we want to increase the risk (stay safer)
+        while self.race_state.get_finished_status() == False:
+            if self.race_state.track_map_updated == True:
+                track_map = self.race_state.get_track_map()
+                self.trajectory = Trajectory(self.parameters)
+                # update risk
+                risk = risk_fun.compute_risk_trackdrive(self.race_state.is_track_map_complete)
+                # TODO: Does the line below also update the risk the compute_velocity function will read from the Parameters?
+                # in theory yes but we should check once we'll have the real ParameterServer
+                send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
 
-            # Construct a trajectory
-            trajectory = ...
-            # Send the trajectory to the ROS topic
-            send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
+                # Compute the trajectory
+                self.trajectory.compute_middle_trajectory(track_map)
+                #compute the velocities
+                self.trajectory.compute_velocities()
+
+                #send the trajectory
+                send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
 
 
 class TestCurve(Race):
