@@ -66,5 +66,10 @@ catkin_install_python(PROGRAMS
   src/LTP/TrajectoryOptimizer.py
   src/LTP/Utils.py
   src/LTP/Trajectory.py
+
+  src/SNS/...
+
+  src/KB/...
+  
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

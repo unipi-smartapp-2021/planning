@@ -3,7 +3,7 @@ import math
 from LTP.Trajectory import Trajectory
 from LTP.PlanStep import PlanStep
 from LTP.Parameters import Parameters
-from ACT.geometry import quaternion_to_euler
+from tf.transformations import euler_from_quaternion
 
 class Car():
     ''' Car class
@@ -97,24 +97,82 @@ class STP():
         self.car.set_speed(*speed)
 
     def get_car_pos_vel(self):
+        """Getter method for both position and velocity
+
+        Returns:
+            (positionX, positionY)(velocityX,velocityY):[]
+        """        
         return self.car.get_position(), self.car.get_speed()
 
     def rad_to_deg(self, angle):
+        """Method to convert radiant to degrees
+
+        Args:
+            angle (float): [Angle expressed in radiants]
+
+        Returns:
+            [float]: [angle expressed in degrees]
+        """        
         return angle*180/math.pi
     
     def deg_to_rad(self, angle):
+        """[Method to convert degrees in radiants]
+
+        Args:
+            angle (float): [angle expressed in degrees]
+
+        Returns:
+            [float]: [angle expressed in radiants]
+        """        
         return angle*math.pi/180
 
     def get_direction(self, a, b):
+        """Method to return the vectorial direction from a to b
+
+        Args:
+            a (tuple): [vector of a]
+            b (tuple): [vecor of b]
+
+        Returns:
+            [tuple]: [vector of b-a]
+        """        
         return a[0]-b[0], a[1]-b[1]
 
     def get_distance_mag(self, a, b):
+        """[Method to get the distance magnitude]
+
+        Args:
+            a (tuple): []
+            b ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """        
         return math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2)
 
     def get_distance_comp(self, a, b):
+        """Get the component of distance vector directed from a to b
+
+        Args:
+            a ([tuple]): [vector of a]
+            b ([tuple]): [vector of b]
+
+        Returns:
+            [type]: [description]
+        """        
         return (b[0]-a[0], b[1]-a[1])
 
-    def compute_angle(self, u, v, verbose=False):
+    def compute_angle(self, u, v):
+        """Method to compute the angle between two vectors
+
+        Args:
+            u ([tuple]): [vector u]
+            v ([tuple]): [vector 2]
+            verbose (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+        """        
         dot_product = np.dot(u, v)
         denominator = np.linalg.norm(u)*np.linalg.norm(v)
         cosine = dot_product/denominator
@@ -142,10 +200,10 @@ class STP():
         # if new plan start from current position is fine
         # else find new closest point wrt old trajectory
         self.last_plan_index = 0
-
+    
     def update_car_status(self, data):
         q = data.orientation
-        (x, y, z) = quaternion_to_euler(q.x, q.y, q.z, q.w)
+        (x, y, z) = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.car.orientation = z
         car_vx = data.velocity * math.cos(z)
         car_vy = data.velocity * math.sin(z)
@@ -195,7 +253,14 @@ class STP():
         index = self.last_plan_index%len(t)
         d = math.inf
         min_index = index
-        while True:
+        first = True
+        while True:            
+            if index == self.last_plan_index:
+                if not first:
+                    print("Loop all plan and no point was found.")
+                    return -1
+                else:
+                    first = False
             curr_p = t[index]
             dist = self.get_distance_mag(self.car.get_position(), curr_p.position)
             dist_c = self.get_distance_comp(self.car.get_position(), curr_p.position)
