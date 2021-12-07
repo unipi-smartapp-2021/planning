@@ -1,4 +1,4 @@
-# Planning v.1.2.0
+# Planning v.1.2.1
 First version of planning module.
 
 ## What does it plan?
