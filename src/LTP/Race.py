@@ -18,7 +18,7 @@ class Race:
         self.race_state = race_state
         # Create a Publisher to the LTP_plan topic
         self.trajectory_publisher = rospy.Publisher("ltp_plan", LTP_Plan, queue_size=1)
-        self.risk_publisher = rospy.Publisher("risk", Risk, queue_size=1)
+        self.risk_publisher = rospy.Publisher("ltp_risk", Risk, queue_size=1)
         #Initialize ROS node
         rospy.init_node('ltp', anonymous=False)
 
