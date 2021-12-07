@@ -86,6 +86,7 @@ class AutoCross(Race):
 
     def race_loop(self):
         while self.race_state.get_finished_status() == False:
+            # TODO: Add a sleep?
             if self.race_state.track_map_updated == True:
                 track_map = self.race_state.get_track_map()
                 self.trajectory = Trajectory(self.parameters)
@@ -110,6 +111,7 @@ class TrackDrive(Race):
 
     def race_loop(self):
         while self.race_state.get_finished_status() == False:
+            # TODO: Add a sleep?
             if self.race_state.track_map_updated == True:
                 track_map = self.race_state.get_track_map()
                 self.trajectory = Trajectory(self.parameters)
