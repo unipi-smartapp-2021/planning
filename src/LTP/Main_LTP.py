@@ -20,6 +20,7 @@ def main():
     race_type = 'simplecurve'
     
     # create race
+    # TODO: subscribe to the EBS topic, when reached stops sending plan
     if race_type == 'acceleration':
         race = rc.Acceleration(parameters, race_state)
     elif race_type ==  'skidpad':

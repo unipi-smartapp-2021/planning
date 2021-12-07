@@ -12,7 +12,8 @@ class RaceState():
 
         Args:
             subscribe (bool, optional): If True, the RaceState will automatically 
-                subscribe to the topics using the default callbacks. 
+                subscribe to the topics using the default callbacks, when updated it will set the internal flag
+                track_map_updated to True
                 If False, you have to use the subscribe methods. Defaults to False.
         """
         
@@ -20,6 +21,7 @@ class RaceState():
         # TODO subscribe to get current state of the race (finisched or not)
         # TODO subscribe to get current lap
         self.trackMap = TrackMap()
+        self.track_map_updated = False
         self.finished = False
         self.current_lap = 1
 

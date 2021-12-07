@@ -85,7 +85,22 @@ class AutoCross(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        pass
+        while self.race_state.get_finished_status() == False:
+            if self.race_state.track_map_updated == True:
+                track_map = self.race_state.get_track_map()
+                self.trajectory = Trajectory(self.parameters)
+                #set the risk to the maximum possible
+                self.parameters.set_risk(risk_fun.constant(
+                    1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
+                send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
+
+                #compute the trajectory
+                self.trajectory.compute_middle_trajectory(self.track_map)
+                #compute the velocities
+                self.trajectory.compute_velocities()
+
+                #send the trajectory
+                send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
 
 
 class TrackDrive(Race):
@@ -93,7 +108,16 @@ class TrackDrive(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        pass
+        # Until the race is going (read state?)
+        while racing:
+            # Stay blocked for new track map updates
+            track_map = read_track_map()
+            # We probably want to read if this is the final track (closed-loop) and in case not we want to increase the risk (stay safer)
+
+            # Construct a trajectory
+            trajectory = ...
+            # Send the trajectory to the ROS topic
+            send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
 
 
 class TestCurve(Race):
