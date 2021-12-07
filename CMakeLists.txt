@@ -70,6 +70,6 @@ catkin_install_python(PROGRAMS
   src/SNS/...
 
   src/KB/...
-  
+
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
