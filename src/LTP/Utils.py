@@ -17,7 +17,7 @@ def find_closest_point_ahead(car_position, car_direction, cones):
     for cone in ord_cones:
         cone = np.array(cone)
         cone_direction = cone - car_position
-        if np.dot(cone_direction, car_direction) > 0:
+        if np.dot(cone_direction, car_direction) >= 0:
             return cone, cones.index(cone)
 
 def reorder_cones(left_cones, right_cones, car_position, car_direction):
