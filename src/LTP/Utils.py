@@ -9,6 +9,55 @@ import numpy as np
     Utility module used to define utility functions
 """
 
+def find_closest_point_ahead(car_position, car_direction, cones):
+    # First order all the cones w.r.t. the car position
+    ord_cones = sorted(cones, key=lambda cone: compute_distance(car_position, cone))
+
+    # Find the closest cone to the car ahead
+    for cone in ord_cones:
+        cone = np.array(cone)
+        cone_direction = cone - car_position
+        if np.dot(cone_direction, car_direction) > 0:
+            return cone, cones.index(cone)
+
+def reorder_cones(left_cones, right_cones, car_position, car_direction):
+    """Reorder cones to be in the right order
+
+    Args:
+        left_cones (List[Tuple[float, float]]): left cones
+        right_cones (List[Tuple[float, float]]): right cones
+        car_position (Tuple[float, float]): car position: as a point in x-y plane
+        car_direction: vector x-y indicating the pointing direction
+
+    Returns:
+        Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]: reordered cones
+    """
+    # find the closest cone to the car
+    ordered_right_cones = []
+    ordered_left_cones = []
+
+    car_position = np.array(car_position)
+
+    while len(right_cones) > 0 and len(left_cones) > 0:
+        # Find the closest cones to the car ahead
+        closest_right_cone, closest_right_idx = find_closest_point_ahead(car_position, car_direction, right_cones)
+        closest_left_cone, closest_left_idx = find_closest_point_ahead(car_position, car_direction, left_cones)
+
+        ordered_left_cones.append(closest_left_cone)
+        ordered_right_cones.append(closest_right_cone)
+
+        # Move the car to the middle point and update car_direction
+        middle_point = compute_middle_point(closest_right_cone, closest_left_cone)
+        middle_point = np.array(middle_point)
+        car_direction = middle_point - car_position
+        car_position = middle_point
+
+        right_cones.pop(closest_right_idx)
+        left_cones.pop(closest_left_idx)
+
+    return ordered_left_cones, ordered_right_cones
+
+
 # TODO: Assert that also the line connecting the two points is inside
 def force_inside_track(track_map, trajectory: List[PlanStep]) -> List[PlanStep]:
     """
