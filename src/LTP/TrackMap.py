@@ -117,7 +117,7 @@ class TrackMap:
                         best_middle_point = middle_point
                         best_middle_point_distance = middle_point_distance
             return best_middle_point
-
+        return point
     
 
     def _compute_nearest_cone(self, position: Tuple[float, float], cones: List[Tuple[float, float]]) -> Tuple[float, float]:
