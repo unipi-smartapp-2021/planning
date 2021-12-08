@@ -166,11 +166,12 @@ def find_lines_intersection(line1: Tuple[float, float], line2: Tuple[float, floa
     #
     # Returns:
     #   The intersection of the two lines
-    # TODO: Add check of None m values..
     a = line1[0]
     c = line1[1]
     b = line2[0]
     d = line2[1]
+    if a == b: # If they are parallel there are either 0 or infinite solutions
+        return None, None
     x = (d-c)/(a-b)
     y = a*x + c
     return x, y

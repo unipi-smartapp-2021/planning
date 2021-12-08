@@ -122,26 +122,28 @@ class TrackMap:
 
     def _compute_nearest_cone(self, position: Tuple[float, float], cones: List[Tuple[float, float]]) -> Tuple[float, float]:
         """
-            Compute the nearest cone to the given position
+            Compute the nearest cone to the given position and its index
         """
         nearest_cone = None
         min_distance = inf
-        for cone in cones:
+        min_idx = -1
+        for i, cone in enumerate(cones):
             distance = compute_distance(cone, position)
             if distance < min_distance:
                 min_distance = distance
                 nearest_cone = cone
-        return nearest_cone
+                min_idx = i
+        return nearest_cone, min_idx
 
-    def get_nearest_left_cone(self, position: Tuple[float, float]) -> Tuple[float, float]:
+    def get_nearest_left_cone(self, position: Tuple[float, float]) -> Tuple[Tuple[float, float], int]:
         """
-            Get the nearest left cone to the given position
+            Get the nearest left cone to the given position and its index
         """
         return self._compute_nearest_cone(position, self.left_cones)
 
-    def get_nearest_right_cone(self, position: Tuple[float, float]) -> Tuple[float, float]:
+    def get_nearest_right_cone(self, position: Tuple[float, float]) -> Tuple[Tuple[float, float], int]:
         """
-            Get the nearest right cone to the given position
+            Get the nearest right cone to the given position and its index
         """
         return self._compute_nearest_cone(position, self.right_cones)
 
