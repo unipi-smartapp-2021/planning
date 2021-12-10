@@ -6,7 +6,7 @@
 class Parameters():
     def __init__(self):
         # get parameters from knowledgebase (TODO)
-        self.RACE_TYPE = "acceleration"  # type of race
+        self.RACE_TYPE = "trackdrive"  # type of race
 
         self.MASS = 231.1  # kg
 

@@ -39,8 +39,6 @@ class Acceleration(Race):
         self.track_map = TrackMap()
         print(os.getcwd())
         self.track_map.load_track("./src/LTP/tests/tracks/acc_slam.json")
-        self.track_map.remove_noise_cones_dbscan(1,2)
-        reorder_cones(self.track_map.get_left_cones(), self.track_map.get_right_cones(), (0,0), (2,0))
         
         # Generate the Trajectory
         self.trajectory = Trajectory(self.parameters)

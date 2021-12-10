@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
-from LTP.Utils import compute_distance, find_line, find_lines_intersection, euclidean_distance
+from LTP.Utils import compute_distance, find_line, find_lines_intersection, euclidean_distance, reorder_cones
 
 def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
@@ -40,6 +40,10 @@ class TrackMap:
         self.right_cones = remove_duplicates(right_cones)
         self.left_cones.sort(key=lambda x: x[0])
         self.right_cones.sort(key=lambda x: x[0])
+
+        self.remove_noise_cones_dbscan(1,2)
+        #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
+        
         self.car_position = None
     
     def is_line_inside_track(self, curr_pos, next_pos):
