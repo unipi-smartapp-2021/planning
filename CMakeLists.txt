@@ -42,9 +42,6 @@ include_directories(
 catkin_install_python(PROGRAMS 
   src/STP/ROS_Stp.py 
   src/STP/Stp.py 
-  src/STP/publisher.py
-  src/STP/subscriber.py
-  
   src/LTP/Bernstein.py
   src/LTP/GraphicUtility.py
   src/LTP/Main_LTP.py
