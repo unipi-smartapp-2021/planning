@@ -1,7 +1,7 @@
 import rospy
 import os
 import LTP.RiskFunctions as risk_fun
-from LTP.Utils import force_inside_track
+from LTP.Utils import force_inside_track, serialize_to_file, reorder_cones
 from LTP.Trajectory import Trajectory
 from LTP.TrackMap import TrackMap
 from LTP.Parameters import Parameters
@@ -21,6 +21,7 @@ class Race:
         self.risk_publisher = rospy.Publisher("ltp_risk", Risk, queue_size=1)
         #Initialize ROS node
         rospy.init_node('ltp', anonymous=False)
+        rate = rospy.Rate(5)
 
     def race_loop():
         raise NotImplemented()
@@ -37,8 +38,10 @@ class Acceleration(Race):
         # Generate the track map given the info
         self.track_map = TrackMap()
         print(os.getcwd())
-        self.track_map.load_track("./src/LTP/tests/tracks/acceleration.json")
-
+        self.track_map.load_track("./src/LTP/tests/tracks/acc_slam.json")
+        self.track_map.remove_noise_cones_dbscan(1,2)
+        reorder_cones(self.track_map.get_left_cones(), self.track_map.get_right_cones(), (0,0), (2,0))
+        
         # Generate the Trajectory
         self.trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
@@ -70,6 +73,7 @@ class Acceleration(Race):
         #send the trajectory
         send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
 
+        serialize_to_file(self.track_map.get_left_cones(), self.track_map.get_right_cones(), self.trajectory.get_trajectory(), "casino")
         #print([planstep.position for planstep in self.trajectory.trajectory])
 
 class SkidPad(Race):
@@ -86,15 +90,14 @@ class AutoCross(Race):
 
     def race_loop(self):
         while self.race_state.get_finished_status() == False:
-            # TODO: Add a sleep?
             if self.race_state.track_map_updated == True:
                 track_map = self.race_state.get_track_map()
                 self.trajectory = Trajectory(self.parameters)
                 # update risk
                 risk = risk_fun.compute_risk_autocross()
-                # TODO: Does the line below also update the risk the compute_velocity function will read from the Parameters?
-                # in theory yes but we should check once we'll have the real ParameterServer
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
+                # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
+                self.parameters.set_risk(risk)
 
                 # Compute the trajectory
                 self.trajectory.compute_middle_trajectory(track_map)
@@ -103,6 +106,7 @@ class AutoCross(Race):
 
                 #send the trajectory
                 send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+        self.rate.sleep()
 
 
 class TrackDrive(Race):
@@ -111,15 +115,14 @@ class TrackDrive(Race):
 
     def race_loop(self):
         while self.race_state.get_finished_status() == False:
-            # TODO: Add a sleep?
-            if self.race_state.track_map_updated == True:
+            if self.race_state.is_track_map_new():
                 track_map = self.race_state.get_track_map()
                 self.trajectory = Trajectory(self.parameters)
                 # update risk
                 risk = risk_fun.compute_risk_trackdrive(self.race_state.is_track_map_complete)
-                # TODO: Does the line below also update the risk the compute_velocity function will read from the Parameters?
-                # in theory yes but we should check once we'll have the real ParameterServer
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
+                # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
+                self.parameters.set_risk(risk)
 
                 # Compute the trajectory
                 self.trajectory.compute_middle_trajectory(track_map)
@@ -128,6 +131,7 @@ class TrackDrive(Race):
 
                 #send the trajectory
                 send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+            self.rate.sleep()
 
 
 class TestCurve(Race):

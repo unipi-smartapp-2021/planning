@@ -1,103 +1,54 @@
 from LTP.TrackMap import TrackMap
+import rospy
+from geometry_msgs.msg import PoseArray, Pose, Point
 
-TRACK_MAP_TOPIC = 'track_map'
-FINISHED_FLAG_TOPIC = 'finished'
-CURRENT_LAP_TOPIC = 'current_lap'
-
-
+# TODO: Right now there is no way to know when the Race is finished
+#       and also to know when we complete a lap.
 class RaceState():
-
     def __init__(self, subscribe=False):
-        """Constructor for RaceState object
-
-        Args:
-            subscribe (bool, optional): If True, the RaceState will automatically 
-                subscribe to the topics using the default callbacks, when updated it will set the internal flag
-                track_map_updated to True
-                If False, you have to use the subscribe methods. Defaults to False.
-        """
-        
-        # TODO subscribe to get map
-        # TODO subscribe to get current state of the race (finisched or not)
-        # TODO subscribe to get current lap
-        self.trackMap = TrackMap()
+        self.track_map = TrackMap()
         self.track_map_updated = False
         self.finished = False
         self.current_lap = 1
 
-    def update_track_map(self):
-        """callback used when new map arrives
-        """
-        pass
+        # Subscribe to the left and right cones
+        self.is_left_cones_updated = False
+        self.is_right_cones_updated = False
+        self.left_cones = []
+        self.right_cones = []
+        rospy.Subscriber("/cone_right", PoseArray, self.update_right_cones)
+        rospy.Subscriber("/cone_left", PoseArray, self.update_left_cones)
 
-    def subscribe_track_map(self, callback):
-        """subscribes to track map topic
+    def update_left_cones(self, msg):
+        poses = msg.poses
+        left_cones = []
+        for pose in poses:
+            point: Point = pose.position
+            left_cones.append((point.x, point.y))
+        self.is_left_cones_updated = True
+        self.try_update_track_map()
 
-        Args:
-            callback (function): callback called when new value arrive for the topic
-        """
-        pass
-    
-    def unsubscribe_track_map(self):
-        """unsubscribe to track map topic
-        """
+    def update_right_cones(self, msg):
+        poses = msg.poses
+        right_cones = []
+        for pose in poses:
+            point: Point = pose.position
+            right_cones.append((point.x, point.y))
+        self.is_right_cones_updated = True
+        self.try_update_track_map()
 
-    def get_track_map(self):
-        """returns last trackmap read from KB
-
-        Returns:
-            TrackMap: last trackmap read from KB
-        """
-        return self.trackMap
-
-    def update_finished(self):
-        """callback used when new finisched status arrives
-        """
-        pass
-
-    def subscribe_finisched_flag(self, callback):
-        """subscribes to finisched flag topic
-
-        Args:
-            callback (function): callback called when new value arrive for the topic
-        """
-        pass
-    
-    def unsubscribe_finisched_flag(self):
-        """unsubscribe from finisched flag topic
-        """
-        pass
+    def try_update_track_map(self):
+        if self.is_left_cones_updated and self.is_right_cones_updated:
+            self.track_map = TrackMap(self.left_cones, self.right_cones)
+            self.track_map_updated = True
+            self.is_left_cones_updated = False
+            self.is_right_cones_updated = False
 
     def get_finished_status(self):
-        """returns current status of finisched flag
-
-        Returns:
-            boolean: current status of finisched flag
-        """
         return self.finished
 
-    def subscribe_current_lap(self, callback):
-        """subscribes to current lap flag topic
+    def get_track_map(self):
+        return self.track_map
 
-        Args:
-            callback (function): callback called when new value arrive for the topic
-        """
-        pass
-    
-    def unsubscribe_current_lap(self):
-        """unsubscribe from current_lap topic
-        """
-        pass
-    
-    def update_current_lap(self):
-        """update current lap
-        """
-        pass
-
-    def get_current_lap(self):
-        """returns
-
-        Returns:
-            [type]: [description]
-        """
-        return self.current_lap
+    def is_track_map_new(self):
+        return self.track_map_updated

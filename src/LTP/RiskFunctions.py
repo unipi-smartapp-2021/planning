@@ -4,16 +4,16 @@
 
 # TODO: Implement me..
 def compute_risk_acceleration() -> float:
-    pass
+    return 0.1
 
-def compute_risk_trackdrive() -> float:
-    pass
+def compute_risk_trackdrive(is_map_complete: bool) -> float:
+    return 0.1
 
 def compute_risk_autocross() -> float:
-    pass
+    return 0.1
 
 def compute_risk_skidpad() -> float:
-    pass
+    return 0.1
 
 def risk_laps(current_lap: int, num_laps: int, min_risk: float, max_risk: float):
     """
