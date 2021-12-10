@@ -7,8 +7,10 @@ from typing import List, Tuple
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import pandas as pd
+from sklearn.cluster import DBSCAN
 
-from LTP.Utils import compute_distance, find_line, find_lines_intersection
+from LTP.Utils import compute_distance, find_line, find_lines_intersection, euclidean_distance, reorder_cones
 
 def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
     """
@@ -26,6 +28,7 @@ def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float
             new_list.append(lst[i])
     return new_list
 
+
 class TrackMap:
     """
         Represent a Track Map defined by the left and right cones positions
@@ -35,6 +38,12 @@ class TrackMap:
     def __init__(self, left_cones: List[Tuple[float, float]] = [], right_cones: List[Tuple[float, float]] = []):
         self.left_cones = remove_duplicates(left_cones)
         self.right_cones = remove_duplicates(right_cones)
+        self.left_cones.sort(key=lambda x: x[0])
+        self.right_cones.sort(key=lambda x: x[0])
+
+        self.remove_noise_cones_dbscan(1,2)
+        #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
+        
         self.car_position = None
     
     def is_line_inside_track(self, curr_pos, next_pos):
@@ -117,31 +126,33 @@ class TrackMap:
                         best_middle_point = middle_point
                         best_middle_point_distance = middle_point_distance
             return best_middle_point
-
+        return point
     
 
     def _compute_nearest_cone(self, position: Tuple[float, float], cones: List[Tuple[float, float]]) -> Tuple[float, float]:
         """
-            Compute the nearest cone to the given position
+            Compute the nearest cone to the given position and its index
         """
         nearest_cone = None
         min_distance = inf
-        for cone in cones:
+        min_idx = -1
+        for i, cone in enumerate(cones):
             distance = compute_distance(cone, position)
             if distance < min_distance:
                 min_distance = distance
                 nearest_cone = cone
-        return nearest_cone
+                min_idx = i
+        return nearest_cone, min_idx
 
-    def get_nearest_left_cone(self, position: Tuple[float, float]) -> Tuple[float, float]:
+    def get_nearest_left_cone(self, position: Tuple[float, float]) -> Tuple[Tuple[float, float], int]:
         """
-            Get the nearest left cone to the given position
+            Get the nearest left cone to the given position and its index
         """
         return self._compute_nearest_cone(position, self.left_cones)
 
-    def get_nearest_right_cone(self, position: Tuple[float, float]) -> Tuple[float, float]:
+    def get_nearest_right_cone(self, position: Tuple[float, float]) -> Tuple[Tuple[float, float], int]:
         """
-            Get the nearest right cone to the given position
+            Get the nearest right cone to the given position and its index
         """
         return self._compute_nearest_cone(position, self.right_cones)
 
@@ -204,3 +215,83 @@ class TrackMap:
         if self.car_position is not None:
             plt.scatter(self.car_position[0], self.car_position[1], color='red', label='Car Pos')
         plt.show()
+
+    def remove_noise_cones_dbscan(self, eps, min_points=2):
+        """
+            remove cones with noise
+        """
+        df = pd.DataFrame(np.array(self.left_cones), columns=['x', 'y'])
+        db = DBSCAN(eps=eps, min_samples=min_points).fit(df)
+        labels = db.labels_
+        unique_labels = set(labels)
+        left_cones = []
+        for k in unique_labels:
+            if k != -1:
+                class_member_mask = (labels == k)
+                xy = df[class_member_mask]
+                if xy.shape[0] > 1:
+                    left_cones.append(xy.iloc[0].values)
+        self.left_cones = left_cones
+
+        df = pd.DataFrame(np.array(self.right_cones), columns=['x', 'y'])
+        db = DBSCAN(eps=eps, min_samples=min_points).fit(df)
+        labels = db.labels_
+        unique_labels = set(labels)
+        right_cones = []
+        for k in unique_labels:
+            if k != -1:
+                class_member_mask = (labels == k)
+                xy = df[class_member_mask]
+                if xy.shape[0] > 1:
+                    right_cones.append(xy.iloc[0].values)
+        self.right_cones = right_cones
+
+    def remove_noise_cones(self, noise: int):
+        """
+            remove cones that are caused by noise in the slam
+        """
+        def remove_noise(cones: List[Tuple[float, float]], noise: int) -> List[Tuple[float, float]]:
+            new_cones = []
+           
+            i = 0
+
+            while i < len(cones):
+                cone = cones[i]
+                sorted_cones = sorted(cones[i:], key=lambda x: compute_distance(x, cone))
+                
+                #add left cone to the list of cones
+                new_cones.append(cone)
+
+                j = 0
+                # Skip all the cones which are at a distance lower than the noise
+                while j < len(sorted_cones) and compute_distance(sorted_cones[j], cone) < noise:
+                    j += 1
+                i += j
+                    
+            return new_cones
+        
+        self.left_cones = remove_noise(self.left_cones, noise)
+        self.right_cones = remove_noise(self.right_cones, noise)
+    
+        
+        # for i in range(len(self.left_cones)-1):
+        #     if euclidean_distance(self.left_cones[i],self.left_cones[i+1]) > noise:
+        #         self.left_cones.pop(i)
+
+        # for i in range(len(self.right_cones)-1):
+        #     if euclidean_distance(self.right_cones[i],self.right_cones[i+1]) < noise:
+        #         self.right_cones.pop(i)
+
+
+
+
+# def remove_noise_cones(self, noise: int):
+#     """
+#         remove cones that are caused by noise in the slam
+#     """
+#     last_left_cone = self.left_cones[0]
+#     last_right_cone = self.right_cones[0]
+#
+#     for i in range(max([len(self.left_cones), len(self.right_cones)])):
+#           if(self.left_cones[i] > ):
+#
