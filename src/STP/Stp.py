@@ -202,12 +202,23 @@ class STP():
         self.last_plan_index = 0
     
     def update_car_status(self, data):
-        q = data.orientation
+        position = data.pose.position
+        q = data.pose.orientation
+        self.car.set_position(position.x, position.y)
         (x, y, z) = euler_from_quaternion([q.x, q.y, q.z, q.w])
         self.car.orientation = z
-        car_vx = data.velocity * math.cos(z)
-        car_vy = data.velocity * math.sin(z)
+    
+    def update_car_speed(self, data):
+        car_vx = data.velocity * math.cos(self.car.orientation)
+        car_vy = data.velocity * math.sin(self.car.orientation)
         self.car.set_speed(car_vx, car_vy)
+
+        # q = data.orientation
+        # (x, y, z) = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        # self.car.orientation = z
+        # car_vx = data.velocity * math.cos(z)
+        # car_vy = data.velocity * math.sin(z)
+        # self.car.set_speed(car_vx, car_vy)
         
     # def update_car_v(self, data):
     #     # lin_acc_x = round(data.acceleration.linear.x, 2)
