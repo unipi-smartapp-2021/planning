@@ -9,7 +9,6 @@ import numpy as np
     Utility module used to define utility functions
 """
 
-
 def order_cones(cones1, cones2, car_position, car_direction):
     """
         order cones1 using car position (cones2 is used only for reference during 
@@ -25,7 +24,7 @@ def order_cones(cones1, cones2, car_position, car_direction):
 
         if cone1 is None or cone2 is None:
             break
-
+        
         # add cone1 to list of ordered cones
         ordered_cones1.append(cone1)
 

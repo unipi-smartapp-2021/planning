@@ -28,6 +28,20 @@ def remove_duplicates(lst: List[Tuple[float, float]]) -> List[Tuple[float, float
             new_list.append(lst[i])
     return new_list
 
+def load_track(file_path):
+    """
+        Load a json file containing the left and right cones to initialize class' values
+    """
+    left_cones, right_cones = [], []
+    with open(file_path) as f:
+        data = json.load(f)
+    for yellow_cone in data['yellow_cones']:
+        left_cones.append((yellow_cone['x'], yellow_cone['y']))
+    for blue_cone in data['blue_cones']:
+        right_cones.append((blue_cone['x'], blue_cone['y']))
+    left_cones = remove_duplicates(left_cones)
+    right_cones = remove_duplicates(right_cones)
+    return TrackMap(left_cones, right_cones)
 
 class TrackMap:
     """
@@ -38,11 +52,12 @@ class TrackMap:
     def __init__(self, left_cones: List[Tuple[float, float]] = [], right_cones: List[Tuple[float, float]] = []):
         self.left_cones = remove_duplicates(left_cones)
         self.right_cones = remove_duplicates(right_cones)
-        self.left_cones.sort(key=lambda x: x[0])
-        self.right_cones.sort(key=lambda x: x[0])
 
-        self.remove_noise_cones_dbscan(1,2)
-        #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
+        if len(self.left_cones) > 0 and len(self.right_cones) > 0:
+            self.remove_noise_cones_dbscan(1,2)
+            self.left_cones.sort(key=lambda x: x[0])
+            self.right_cones.sort(key=lambda x: x[0])
+            #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
         
         self.car_position = None
     
@@ -161,19 +176,6 @@ class TrackMap:
             Compute the track width as the distance between the first 2 cones (TODO: There could be missing cones)
         """
         return compute_distance(self.left_cones[0], self.right_cones[0])
-
-    def load_track(self, file_path):
-        """
-            Load a json file containing the left and right cones to initialize class' values
-        """
-        with open(file_path) as f:
-            data = json.load(f)
-        for yellow_cone in data['yellow_cones']:
-            self.left_cones.append((yellow_cone['x'], yellow_cone['y']))
-        for blue_cone in data['blue_cones']:
-            self.right_cones.append((blue_cone['x'], blue_cone['y']))
-        self.left_cones = remove_duplicates(self.left_cones)
-        self.right_cones = remove_duplicates(self.right_cones)
     
     def get_left_cones(self):
         """

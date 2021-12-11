@@ -3,7 +3,7 @@ import os
 import LTP.RiskFunctions as risk_fun
 from LTP.Utils import force_inside_track, serialize_to_file, reorder_cones
 from LTP.Trajectory import Trajectory
-from LTP.TrackMap import TrackMap
+from LTP.TrackMap import TrackMap, load_track
 from LTP.Parameters import Parameters
 from LTP.SampleTrack import StraightTrackMap, skidpad
 from LTP.ROSInterface import send_trajectory_to_ros_topic, send_risk_to_ros_topic
@@ -21,7 +21,7 @@ class Race:
         self.risk_publisher = rospy.Publisher("ltp_risk", Risk, queue_size=1)
         #Initialize ROS node
         rospy.init_node('ltp', anonymous=False)
-        rate = rospy.Rate(5)
+        self.rate = rospy.Rate(5)
 
     def race_loop():
         raise NotImplemented()
@@ -36,9 +36,7 @@ class Acceleration(Race):
         # TODO think when the track finishes
 
         # Generate the track map given the info
-        track_map = TrackMap()
-        print(os.getcwd())
-        track_map.load_track("./src/LTP/tests/tracks/acc_slam.json")
+        track_map = load_track("./src/LTP/tests/tracks/acc_slam.json")
         
         # Generate the Trajectory
         trajectory = Trajectory(self.parameters)
@@ -85,7 +83,7 @@ class SkidPad(Race):
         self.parameters.set_risk(risk)
         
         # TODO: Read these parameters from self.parameters (KB)
-        track_maps = skidpad(first_straight_meters=10, circle_radius=30, second_straight_meters=10, N_cones=(5, 25, 5)], track_width=3)
+        track_maps = skidpad(first_straight_meters=10, circle_radius=30, second_straight_meters=10, N_cones=(5, 25, 5), track_width=3)
         
         def compute_trajectory(track_map):
             # Compute trajectory for first straight
@@ -167,7 +165,6 @@ class TestCurve(Race):
 
         # Generate the track map given the info
         track_map = TrackMap()
-        print(os.getcwd())
         track_map.load_track("./src/LTP/tests/tracks/simplecurve.json")
 
         # Generate the Trajectory
