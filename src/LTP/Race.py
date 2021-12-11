@@ -36,43 +36,43 @@ class Acceleration(Race):
         # TODO think when the track finishes
 
         # Generate the track map given the info
-        self.track_map = TrackMap()
+        track_map = TrackMap()
         print(os.getcwd())
-        self.track_map.load_track("./src/LTP/tests/tracks/acc_slam.json")
+        track_map.load_track("./src/LTP/tests/tracks/acc_slam.json")
         
         # Generate the Trajectory
-        self.trajectory = Trajectory(self.parameters)
+        trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
         send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
 
         #compute the trajectory
-        self.trajectory.compute_middle_trajectory(self.track_map)
+        trajectory.compute_middle_trajectory(track_map)
         #compute the velocities
-        self.trajectory.compute_velocities()
+        trajectory.compute_velocities()
 
         #compute breaking distance
-        vel_final = self.trajectory.get_trajectory()[-1].get_velocity()
+        vel_final = trajectory.get_trajectory()[-1].get_velocity()
         breaking_distance = 0.5 * (vel_final**2)/(self.parameters.get_max_deceleration())
 
         #add last position of trajectory and set to 0
-        self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [0,0]))
+        trajectory.trajectory.append(PlanStep((trajectory.get_trajectory()[-1].get_position()[0] - breaking_distance, 0), 0, [0,0]))
         #update velocities so that we sure we stop
-        self.trajectory._bound_velocities()
+        trajectory._bound_velocities()
 
         #add 0 velocity points for 50 meters every STEP meters
         STEP = 5
         METERS_END = self.parameters.get_acc_track_dec_length() + breaking_distance
 
         for i in range(1, int(METERS_END//STEP)):
-            self.trajectory.trajectory.append(PlanStep((self.trajectory.get_trajectory()[-1].get_position()[0] + STEP, 0), 0, [0,0]))
+            trajectory.trajectory.append(PlanStep((trajectory.get_trajectory()[-1].get_position()[0] + STEP, 0), 0, [0,0]))
 
         #send the trajectory
-        send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+        send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
 
-        serialize_to_file(self.track_map.get_left_cones(), self.track_map.get_right_cones(), self.trajectory.get_trajectory(), "casino")
-        #print([planstep.position for planstep in self.trajectory.trajectory])
+        serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), "casino")
+        #print([planstep.position for planstep in trajectory.trajectory])
 
 class SkidPad(Race):
     def __init__(self, parameters: Parameters, race_state: RaceState):
@@ -90,7 +90,7 @@ class AutoCross(Race):
         while self.race_state.get_finished_status() == False:
             if self.race_state.track_map_updated == True:
                 track_map = self.race_state.get_track_map()
-                self.trajectory = Trajectory(self.parameters)
+                trajectory = Trajectory(self.parameters)
                 # update risk
                 risk = risk_fun.compute_risk_autocross()
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
@@ -98,12 +98,12 @@ class AutoCross(Race):
                 self.parameters.set_risk(risk)
 
                 # Compute the trajectory
-                self.trajectory.compute_middle_trajectory(track_map)
+                trajectory.compute_middle_trajectory(track_map)
                 #compute the velocities
-                self.trajectory.compute_velocities()
+                trajectory.compute_velocities()
 
                 #send the trajectory
-                send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+                send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
         self.rate.sleep()
 
 
@@ -115,7 +115,7 @@ class TrackDrive(Race):
         while self.race_state.get_finished_status() == False:
             if self.race_state.is_track_map_new():
                 track_map = self.race_state.get_track_map()
-                self.trajectory = Trajectory(self.parameters)
+                trajectory = Trajectory(self.parameters)
                 # update risk
                 risk = risk_fun.compute_risk_trackdrive(self.race_state.is_track_map_complete)
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
@@ -123,12 +123,12 @@ class TrackDrive(Race):
                 self.parameters.set_risk(risk)
 
                 # Compute the trajectory
-                self.trajectory.compute_middle_trajectory(track_map)
+                trajectory.compute_middle_trajectory(track_map)
                 #compute the velocities
-                self.trajectory.compute_velocities()
+                trajectory.compute_velocities()
 
                 #send the trajectory
-                send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+                send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
             self.rate.sleep()
 
 
@@ -142,23 +142,23 @@ class TestCurve(Race):
         intra_cone_distance = self.parameters.get_intra_cone_distance()
 
         # Generate the track map given the info
-        self.track_map = TrackMap()
+        track_map = TrackMap()
         print(os.getcwd())
-        self.track_map.load_track("./src/LTP/tests/tracks/simplecurve.json")
+        track_map.load_track("./src/LTP/tests/tracks/simplecurve.json")
 
         # Generate the Trajectory
-        self.trajectory = Trajectory(self.parameters)
+        trajectory = Trajectory(self.parameters)
         #set the risk to the maximum possible
         self.parameters.set_risk(risk_fun.constant(
             1, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
         send_risk_to_ros_topic(self.parameters.get_risk(), self.risk_publisher, Risk)
 
         #compute the trajectory
-        self.trajectory.compute_middle_trajectory(self.track_map)
+        trajectory.compute_middle_trajectory(track_map)
         #compute the velocities
-        self.trajectory.compute_velocities()
+        trajectory.compute_velocities()
 
         #send the trajectory
-        send_trajectory_to_ros_topic(self.trajectory, self.trajectory_publisher, LTP_Plan)
+        send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
 
-        #print([planstep.position for planstep in self.trajectory.trajectory])
+        #print([planstep.position for planstep in trajectory.trajectory])
