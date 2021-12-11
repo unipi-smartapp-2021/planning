@@ -126,6 +126,12 @@ class AutoCross(Race):
                 #compute the velocities
                 trajectory.compute_velocities()
 
+                # Gestione fine gara
+                if self.race_state.is_last_lap():
+                    trajectory.trajectory[-1].velocity = 0
+                    trajectory.trajectory[-1].velocity_vector = [(0,0), (0,0)]
+                trajectory._bound_velocities()
+
                 #send the trajectory
                 send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
         self.rate.sleep()
@@ -150,6 +156,12 @@ class TrackDrive(Race):
                 trajectory.compute_middle_trajectory(track_map)
                 #compute the velocities
                 trajectory.compute_velocities()
+
+                # Gestione fine gara
+                if self.race_state.is_last_lap():
+                    trajectory.trajectory[-1].velocity = 0
+                    trajectory.trajectory[-1].velocity_vector = [(0,0), (0,0)]
+                trajectory._bound_velocities()
 
                 #send the trajectory
                 send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)

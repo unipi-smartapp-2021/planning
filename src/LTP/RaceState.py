@@ -19,6 +19,9 @@ class RaceState():
         rospy.Subscriber("/cone_right", PoseArray, self.update_right_cones)
         rospy.Subscriber("/cone_left", PoseArray, self.update_left_cones)
 
+    def is_last_lap(self):
+        return True # TODO: Right now there is no way to know the current lap (KB)
+
     def update_left_cones(self, msg):
         poses = msg.poses
         left_cones = []
