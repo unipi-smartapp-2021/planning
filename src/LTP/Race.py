@@ -5,7 +5,7 @@ from LTP.Utils import force_inside_track, serialize_to_file, reorder_cones
 from LTP.Trajectory import Trajectory
 from LTP.TrackMap import TrackMap
 from LTP.Parameters import Parameters
-from LTP.SampleTrack import StraightTrackMap
+from LTP.SampleTrack import StraightTrackMap, skidpad
 from LTP.ROSInterface import send_trajectory_to_ros_topic, send_risk_to_ros_topic
 from planning.msg import LTP_Plan, Risk
 from rospy.client import spin
@@ -79,7 +79,31 @@ class SkidPad(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        pass
+        risk = risk_fun.compute_risk_skidpad()
+        send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
+        # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
+        self.parameters.set_risk(risk)
+        
+        # TODO: Read these parameters from self.parameters (KB)
+        track_maps = skidpad(first_straight_meters=10, circle_radius=30, second_straight_meters=10, N_cones=(5, 25, 5)], track_width=3)
+        
+        def compute_trajectory(track_map):
+            # Compute trajectory for first straight
+            first_straight_track_map = track_map
+            trajectory = Trajectory(self.parameters)
+            # Compute the trajectory
+            trajectory.compute_middle_trajectory(track_map)
+            #compute the velocities
+            trajectory.compute_velocities()
+            return trajectory
+
+        # Merge together all the trajectories
+        trajectory = []
+        for track_map in track_maps:
+            trajectory = trajectory + compute_trajectory(track_map).trajectory
+        final_trajectory = Trajectory(self.parameters)
+        final_trajectory.set_trajectory(trajectory)
+        send_trajectory_to_ros_topic(final_trajectory, self.trajectory_publisher, LTP_Plan)
 
 
 class AutoCross(Race):
