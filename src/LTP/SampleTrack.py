@@ -35,11 +35,13 @@ def skidpad(first_straight_meters: float, circle_radius: float, second_straight_
     left_cones = circle_track.left_cones
     right_cones = circle_track.right_cones
     list_track_map.append(TrackMap(left_cones, right_cones))
+    list_track_map.append(TrackMap(left_cones, right_cones))
 
     # Left circle
     circle_track = CircleTrackMap(circle_radius, track_width, N_cones_per_circle, r_x - circle_radius - track_width, r_y, start_angle=0, end_angle=360, swap_cones=True)
     left_cones = circle_track.left_cones
     right_cones = circle_track.right_cones
+    list_track_map.append(TrackMap(left_cones, right_cones))
     list_track_map.append(TrackMap(left_cones, right_cones))
     
     r_x = right_cones[-1][0]
