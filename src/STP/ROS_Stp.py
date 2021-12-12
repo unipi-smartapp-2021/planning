@@ -4,7 +4,7 @@ import math
 import carla
 import matplotlib.pyplot as plt
 from planning.msg import STP_Data, LTP_Plan, CarlaEgoVehicleStatus
-from geometry_msgs.PoseStamped import PoseStamped
+from geometry_msgs.msg import PoseStamped
 from STP.Stp import STP
 # from LTP.TrackMap import TrackMap
 
