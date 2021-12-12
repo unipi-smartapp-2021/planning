@@ -138,14 +138,14 @@ class Trajectory:
             if required_acc > self.parameters.get_max_acceleration():
                 # Given the max_acceleration of our car we cannot reach the final velocity
                 # We then decrease the final velocity to the highest velocity we can reach
-                new_velocity = min(self._reduce_final_velocity(current_pos, next_pos, current_velocity, self.parameters.get_max_acceleration()), self.parameters.get_min_velocity())
+                new_velocity = max(self._reduce_final_velocity(current_pos, next_pos, current_velocity, self.parameters.get_max_acceleration()), self.parameters.get_min_velocity())
                 print(f"Reducing final velocity from {new_trajectory[(i+1) % len(self.trajectory)].velocity} to {new_velocity}")
                 new_trajectory[(i+1) % len(self.trajectory)].velocity = new_velocity
             elif -self.parameters.get_max_deceleration() < required_acc:
                 # Given the max_deceleration of our car we cannot slow down to the final velocity
-                # We then decrease the final velocity to the highest velocity we can reach starting from the final point
+                # We then decrease the initial velocity to the highest velocity we can reach starting from the final point
                 # and assuming that our acceleration is the negative of the maximum deceleration
-                new_velocity = min(self._reduce_final_velocity(next_pos, current_pos, next_velocity, -self.parameters.get_max_deceleration()), self.parameters.get_min_velocity())
+                new_velocity = max(self._reduce_final_velocity(next_pos, current_pos, next_velocity, -self.parameters.get_max_deceleration()), self.parameters.get_min_velocity())
                 print(f"Reducing initial velocity from {new_trajectory[i % len(self.trajectory)].velocity} to {new_velocity}")
                 new_trajectory[i % len(self.trajectory)].velocity = new_velocity
         return new_trajectory
