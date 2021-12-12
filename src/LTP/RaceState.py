@@ -24,19 +24,19 @@ class RaceState():
 
     def update_left_cones(self, msg):
         poses = msg.poses
-        left_cones = []
+        self.left_cones = []
         for pose in poses:
             point: Point = pose.position
-            left_cones.append((point.x, point.y))
+            self.left_cones.append((point.x, point.y))
         self.is_left_cones_updated = True
         self.try_update_track_map()
 
     def update_right_cones(self, msg):
         poses = msg.poses
-        right_cones = []
+        self.right_cones = []
         for pose in poses:
             point: Point = pose.position
-            right_cones.append((point.x, point.y))
+            self.right_cones.append((point.x, point.y))
         self.is_right_cones_updated = True
         self.try_update_track_map()
 

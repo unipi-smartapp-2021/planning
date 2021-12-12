@@ -6,7 +6,7 @@
 def compute_risk_acceleration() -> float:
     return 0.1
 
-def compute_risk_trackdrive(is_map_complete: bool) -> float:
+def compute_risk_trackdrive(is_map_complete: bool = False) -> float:
     return 0.1
 
 def compute_risk_autocross() -> float:

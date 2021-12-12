@@ -140,29 +140,34 @@ class TrackDrive(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
+        i = 0
         while self.race_state.get_finished_status() == False:
             if self.race_state.is_track_map_new():
                 track_map = self.race_state.get_track_map()
                 trajectory = Trajectory(self.parameters)
                 # update risk
-                risk = risk_fun.compute_risk_trackdrive(self.race_state.is_track_map_complete)
+                risk = risk_fun.compute_risk_trackdrive()
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
                 # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
                 self.parameters.set_risk(risk)
 
                 # Compute the trajectory
-                trajectory.compute_middle_trajectory(track_map)
-                #compute the velocities
-                trajectory.compute_velocities()
+                if len(track_map.get_left_cones()) > 2:
+                    trajectory.compute_middle_trajectory(track_map)
+                    #compute the velocities
+                    trajectory.compute_velocities()
 
-                # Gestione fine gara
-                if self.race_state.is_last_lap():
-                    trajectory.trajectory[-1].velocity = 0
-                    trajectory.trajectory[-1].velocity_vector = [(0,0), (0,0)]
-                trajectory._bound_velocities()
+                    # Gestione fine gara
+                    if self.race_state.is_last_lap():
+                        trajectory.trajectory[-1].velocity = 0
+                        trajectory.trajectory[-1].velocity_vector = [(0,0), (0,0)]
+                    trajectory._bound_velocities()
 
-                #send the trajectory
-                send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
+                    #send the trajectory
+                    send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
+                    
+                    #serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), str(i))
+
             self.rate.sleep()
 
 
