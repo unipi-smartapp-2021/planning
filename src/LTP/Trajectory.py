@@ -7,6 +7,7 @@ from LTP.TrackMap import TrackMap
 from LTP.PlanStep import PlanStep
 from LTP.Utils import euclidean_distance, find_closest_point, compute_middle_point, compute_spline, find_line
 from math import atan2, sin, cos, sqrt, inf
+import copy
 
 class Trajectory:
     """
@@ -93,14 +94,19 @@ class Trajectory:
         :param trajectory: the trajectory to compute the velocities
         :return: the trajectory with the velocities
         """
-        # We need the first and second derivative of the trajectory to compute the Curvature needed
-        # for the maximum velocity
-        _, f_x, f_y, df_x, df_y, ddf_x, ddf_y = compute_spline(self.trajectory)
-        for i in range(0, len(self.trajectory)):
-            curvature = self._compute_radius(f_x[i], f_y[i], df_x[i], df_y[i], ddf_x[i], ddf_y[i])
-            self.trajectory[i].velocity = self._compute_velocity(curvature)
-        # Assert that the velocities are not too high
-        self._bound_velocities()
+        if (len(self.trajectory) < 3):
+            for i in range(0, len(self.trajectory)):
+                self.trajectory[i].velocity = self.parameters.get_min_velocity()
+        else:
+            # We need the first and second derivative of the trajectory to compute the Curvature needed
+            # for the maximum velocity
+            _, f_x, f_y, df_x, df_y, ddf_x, ddf_y = compute_spline(self.trajectory)
+            for i in range(0, len(self.trajectory)):
+                curvature = self._compute_radius(f_x[i], f_y[i], df_x[i], df_y[i], ddf_x[i], ddf_y[i])
+                self.trajectory[i].velocity = self._compute_velocity(curvature)
+            # Assert that the velocities are not too high
+            self._bound_velocities()
+        
         # Compute the velocity vector
         self._compute_angles()
 
@@ -124,31 +130,34 @@ class Trajectory:
         return new_velocity
 
     def _bound_velocities(self):
-        new_trajectory = list(self.trajectory)
-        # TODO: note the 2*len(trajectory) makes sense only in a closed loop (is this assumption correct?)
-        for i in range(0, 2*len(self.trajectory)):
-            # We check if from the current velocity and position we can reach the next velocity given the car constraints
-            current_pos = new_trajectory[i % len(new_trajectory)].position
-            next_pos = new_trajectory[(i+1) % len(new_trajectory)].position
-            current_velocity = new_trajectory[i % len(new_trajectory)].velocity
-            next_velocity = new_trajectory[(i+1) % len(new_trajectory)].velocity
-            avg_velocity = (current_velocity + next_velocity) / 2
-            time = euclidean_distance(current_pos, next_pos) / avg_velocity
-            required_acc = (next_velocity - current_velocity) / time # v_f = v_i + a*t => a = v_f - v_i / t
-            if required_acc > self.parameters.get_max_acceleration():
-                # Given the max_acceleration of our car we cannot reach the final velocity
-                # We then decrease the final velocity to the highest velocity we can reach
-                new_velocity = max(self._reduce_final_velocity(current_pos, next_pos, current_velocity, self.parameters.get_max_acceleration()), self.parameters.get_min_velocity())
-                print(f"Reducing final velocity from {new_trajectory[(i+1) % len(self.trajectory)].velocity} to {new_velocity}")
-                new_trajectory[(i+1) % len(self.trajectory)].velocity = new_velocity
-            elif -self.parameters.get_max_deceleration() < required_acc:
-                # Given the max_deceleration of our car we cannot slow down to the final velocity
-                # We then decrease the initial velocity to the highest velocity we can reach starting from the final point
-                # and assuming that our acceleration is the negative of the maximum deceleration
-                new_velocity = max(self._reduce_final_velocity(next_pos, current_pos, next_velocity, -self.parameters.get_max_deceleration()), self.parameters.get_min_velocity())
-                print(f"Reducing initial velocity from {new_trajectory[i % len(self.trajectory)].velocity} to {new_velocity}")
-                new_trajectory[i % len(self.trajectory)].velocity = new_velocity
-        return new_trajectory
+        if len(self.trajectory) >= 2:
+            new_trajectory = list(self.trajectory)
+            # TODO: note the 2*len(trajectory) makes sense only in a closed loop (is this assumption correct?)
+            for i in range(0, 2*len(self.trajectory)):
+                # We check if from the current velocity and position we can reach the next velocity given the car constraints
+                current_pos = new_trajectory[i % len(new_trajectory)].position
+                next_pos = new_trajectory[(i+1) % len(new_trajectory)].position
+                current_velocity = new_trajectory[i % len(new_trajectory)].velocity
+                next_velocity = new_trajectory[(i+1) % len(new_trajectory)].velocity
+                avg_velocity = (current_velocity + next_velocity) / 2
+                time = euclidean_distance(current_pos, next_pos) / avg_velocity
+                required_acc = (next_velocity - current_velocity) / time # v_f = v_i + a*t => a = v_f - v_i / t
+                if required_acc > self.parameters.get_max_acceleration():
+                    # Given the max_acceleration of our car we cannot reach the final velocity
+                    # We then decrease the final velocity to the highest velocity we can reach
+                    new_velocity = max(self._reduce_final_velocity(current_pos, next_pos, current_velocity, self.parameters.get_max_acceleration()), self.parameters.get_min_velocity())
+                    print(f"Reducing final velocity from {new_trajectory[(i+1) % len(self.trajectory)].velocity} to {new_velocity}")
+                    new_trajectory[(i+1) % len(self.trajectory)].velocity = new_velocity
+                elif -self.parameters.get_max_deceleration() < required_acc:
+                    # Given the max_deceleration of our car we cannot slow down to the final velocity
+                    # We then decrease the initial velocity to the highest velocity we can reach starting from the final point
+                    # and assuming that our acceleration is the negative of the maximum deceleration
+                    new_velocity = max(self._reduce_final_velocity(next_pos, current_pos, next_velocity, -self.parameters.get_max_deceleration()), self.parameters.get_min_velocity())
+                    print(f"Reducing initial velocity from {new_trajectory[i % len(self.trajectory)].velocity} to {new_velocity}")
+                    new_trajectory[i % len(self.trajectory)].velocity = new_velocity
+            return new_trajectory
+        else:
+            return copy.deepcopy(self.trajectory)
 
     def _compute_velocity(self, curvature: float) -> float:
         """

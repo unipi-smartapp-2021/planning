@@ -151,22 +151,22 @@ class TrackDrive(Race):
                 # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
                 self.parameters.set_risk(risk)
 
-                # Compute the trajectory
-                if len(track_map.get_left_cones()) > 2:
+                if len(track_map.get_left_cones()) > 0 and len(track_map.get_right_cones()) > 0:
+                    # Compute the trajectory
                     trajectory.compute_middle_trajectory(track_map)
                     #compute the velocities
                     trajectory.compute_velocities()
 
                     # Gestione fine gara
-                    if self.race_state.is_last_lap():
+                    if self.race_state.is_last_lap() and self.race_state.is_track_map_complete():
                         trajectory.trajectory[-1].velocity = 0
                         trajectory.trajectory[-1].velocity_vector = [(0,0), (0,0)]
-                    trajectory._bound_velocities()
+                        trajectory._bound_velocities()
 
                     #send the trajectory
                     send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
-                    
-                    #serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), str(i))
+                
+                #serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), str(i))
 
             self.rate.sleep()
 

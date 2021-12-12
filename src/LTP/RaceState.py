@@ -8,7 +8,7 @@ class RaceState():
     def __init__(self, subscribe=False):
         self.track_map = TrackMap()
         self.track_map_updated = False
-        self.finished = False
+        self.finished = False # Is the race over?
         self.current_lap = 1
 
         # Subscribe to the left and right cones
@@ -52,6 +52,9 @@ class RaceState():
 
     def get_track_map(self):
         return self.track_map
+
+    def is_track_map_complete(self):
+        return False
 
     def is_track_map_new(self):
         return self.track_map_updated
