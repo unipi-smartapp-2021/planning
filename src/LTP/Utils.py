@@ -220,7 +220,7 @@ def compute_spline(points: List[PlanStep]):
     xs = [plan_step.position[0] for plan_step in points]
     ys = [plan_step.position[1] for plan_step in points]
 
-    tck,u=interpolate.splprep([xs,ys],s=0.0)
+    tck,u=interpolate.splprep([xs,ys],s=0.0, k = min(5, len(points) - 1))
 
     x_i,y_i= interpolate.splev(u,tck)
     dx_i,dy_i= interpolate.splev(u,tck, der=1)

@@ -142,6 +142,7 @@ class TrackDrive(Race):
     def race_loop(self):
         i = 0
         while self.race_state.get_finished_status() == False:
+            print(self.race_state.is_track_map_new())
             if self.race_state.is_track_map_new():
                 track_map = self.race_state.get_track_map()
                 trajectory = Trajectory(self.parameters)
@@ -150,7 +151,7 @@ class TrackDrive(Race):
                 send_risk_to_ros_topic(risk, self.risk_publisher, Risk)
                 # TODO: In theory the ParameterServer from the KB should update the risk by subscribing to the risk topic
                 self.parameters.set_risk(risk)
-
+                #print(len(track_map.get_left_cones()))
                 if len(track_map.get_left_cones()) > 0 and len(track_map.get_right_cones()) > 0:
                     # Compute the trajectory
                     trajectory.compute_middle_trajectory(track_map)
@@ -166,7 +167,9 @@ class TrackDrive(Race):
                     #send the trajectory
                     send_trajectory_to_ros_topic(trajectory, self.trajectory_publisher, LTP_Plan)
                 
-                #serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), str(i))
+                print(i)
+                serialize_to_file(track_map.get_left_cones(), track_map.get_right_cones(), trajectory.get_trajectory(), str(i))
+                i += 1
 
             self.rate.sleep()
 

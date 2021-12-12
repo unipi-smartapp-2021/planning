@@ -25,6 +25,7 @@ class RaceState():
     def update_left_cones(self, msg):
         poses = msg.poses
         self.left_cones = []
+        print("Left cones:")
         for pose in poses:
             point: Point = pose.position
             self.left_cones.append((point.x, point.y))
