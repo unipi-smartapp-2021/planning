@@ -54,9 +54,10 @@ class TrackMap:
         self.right_cones = remove_duplicates(right_cones)
 
         if len(self.left_cones) > 0 and len(self.right_cones) > 0:
-            self.remove_noise_cones_dbscan(1,1)
+            #self.remove_noise_cones_dbscan(1,1)
             self.left_cones.sort(key=lambda x: x[0])
             self.right_cones.sort(key=lambda x: x[0])
+            self.remove_noise_cones(5)
             #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
         
         self.car_position = None
