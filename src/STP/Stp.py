@@ -261,31 +261,34 @@ class STP():
         # print("Alle curve si va dritto!")
         # 1. Find next plan point
         t = self.trajectory.get_trajectory()
-        index = self.last_plan_index%len(t)
-        d = math.inf
-        min_index = index
-        first = True
-        while True:            
-            if index == self.last_plan_index:
-                if not first:
-                    print("Loop all plan and no point was found.")
-                    return -1
+        if len(t) == 1:
+            min_index = 0
+        else:
+            index = self.last_plan_index%len(t)
+            d = math.inf
+            min_index = index
+            first = True
+            while True:            
+                if index == self.last_plan_index:
+                    if not first:
+                        print("Loop all plan and no point was found.")
+                        min_index = self.last_plan_index    
+                    else:
+                        first = False
+                curr_p = t[index]
+                dist = self.get_distance_mag(self.car.get_position(), curr_p.position)
+                dist_c = self.get_distance_comp(self.car.get_position(), curr_p.position)
+                psi = self.compute_angle(self.car.get_speed(), dist_c)
+                print(f"index: {index} - car_pos: {self.car.get_position()}, car_speed: {self.car.get_speed()}, plan_pos: {curr_p.position}, distance: {dist}, psi: {math.degrees(psi)}, cur_min_d: {d}")
+                if psi >= math.pi/2: # discard point behind
+                    index = (index+1)%len(t)
+                    continue
+                if dist < d: # closest point in front of me
+                    d = dist
+                    min_index = index
+                    index = (index+1)%len(t)
                 else:
-                    first = False
-            curr_p = t[index]
-            dist = self.get_distance_mag(self.car.get_position(), curr_p.position)
-            dist_c = self.get_distance_comp(self.car.get_position(), curr_p.position)
-            psi = self.compute_angle(self.car.get_speed(), dist_c)
-            print(f"index: {index} - car_pos: {self.car.get_position()}, car_speed: {self.car.get_speed()}, plan_pos: {curr_p.position}, distance: {dist}, psi: {math.degrees(psi)}, cur_min_d: {d}")
-            if psi >= math.pi/2: # discard point behind
-                index = (index+1)%len(t)
-                continue
-            if dist < d: # closest point in front of me
-                d = dist
-                min_index = index
-                index = (index+1)%len(t)
-            else:
-                break
+                    break
 
         self.last_plan_index = min_index
         # print(min_index, d)
@@ -336,6 +339,8 @@ class STP():
         delta_v = t[min_index].velocity - car_v_r_module
         print(f"delta_v: {delta_v}")
 
+        return self.car.orientation, delta_theta, delta_v
+
         # #psi = Angolo tra real e asse y canonico FORCONE
         # real_canonic = self.rotate(*real, -alpha)
         # print(f"real_canonic' : {real_canonic}")
@@ -345,24 +350,24 @@ class STP():
         # print(f"psi_angle' : {math.degrees(psi)}")
 
         # define custom simulation (To delete)
-        new_car_module = car_v_r_module + delta_v/2
+        # new_car_module = car_v_r_module + delta_v/2
         # print(f"new_car_module : {new_car_module}")
-        new_car_angle = car_v_r_angle - delta_theta
+        # new_car_angle = car_v_r_angle - delta_theta
         # print(f"new_car_angle : {math.degrees(new_car_angle)}")
-        d_vx = new_car_module * math.cos(new_car_angle)
-        d_vy = new_car_module * math.sin(new_car_angle)
+        # d_vx = new_car_module * math.cos(new_car_angle)
+        # d_vy = new_car_module * math.sin(new_car_angle)
         # print(f"dx: {d_vx}, dy: {d_vy}")
-        rdx, rdy = self.rotate(d_vx, d_vy, -alpha)
+        # rdx, rdy = self.rotate(d_vx, d_vy, -alpha)
         # print(f"rdx: {rdx}, rdy: {rdy}")
         
-        new_car_x = self.car.current_position_x + rdx
-        new_car_y = self.car.current_position_y + rdy
+        # new_car_x = self.car.current_position_x + rdx
+        # new_car_y = self.car.current_position_y + rdy
         # print(f"car_x: {self.car.current_position_x}, car_y: {self.car.current_position_y}")
         # print(f"new_car_x : {new_car_x}, new_car_y : {new_car_y}")
-        pos_vel_angle = self.compute_angle(self.car.get_speed(),self.car.get_position())
+        # pos_vel_angle = self.compute_angle(self.car.get_speed(),self.car.get_position())
         # print(f"pos_vel_angle: {pos_vel_angle}")
 
-        return self.car.orientation, delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
+        # return self.car.orientation, delta_theta, delta_v, new_car_x, new_car_y, rdx, rdy, t[min_index].position
 
     def __str__(self):
         return "tomareomo"
