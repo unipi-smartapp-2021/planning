@@ -34,6 +34,82 @@ class Acceleration(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
+        rospy.loginfo("wainting for cones")
+        while self.race_state.get_finished_status() == False:
+            #check if race is finished
+            if self.race_state.get_car_position()[0] > self.parameters.get_acc_track_acc_length():
+                self.race_state.set_finished_status(True)
+                
+            if self.race_state.is_track_map_new():
+                
+                track_map = self.race_state.get_track_map()
+                trajectory = Trajectory(self.parameters)
+                
+                # update risk
+                # set the risk to the minimum possible
+                self.parameters.set_risk(risk_fun.constant(
+                    0, self.parameters.get_min_risk(), self.parameters.get_max_risk()))
+                send_risk_to_ros_topic(self.parameters.get_risk(),
+                                    self.risk_publisher, Risk)
+
+                rospy.loginfo(
+                    f"received track map with {len(track_map.get_left_cones())} left cones and {len(track_map.get_left_cones())} right cones")
+
+                if len(track_map.get_left_cones()) > 0 and len(track_map.get_right_cones()) > 0:
+                    # Compute the trajectory
+                    trajectory.compute_middle_trajectory(track_map) 
+                    # compute the velocities
+                    trajectory.compute_velocities()
+
+                    # Remove point that are behind us
+                    car_x = self.race_state.get_car_position()[0]
+                    trajectory.trajectory = list(filter(lambda x: x.position[0] >= car_x, trajectory.trajectory))
+                    if len(trajectory.trajectory) > 0:
+                        # # send the trajectory
+                        # print("car position:", self.race_state.get_car_position())
+                        # print("final step x: ", trajectory.trajectory[-1].position[0])
+                        send_trajectory_to_ros_topic(
+                            trajectory, self.trajectory_publisher, LTP_Plan)
+
+                        rospy.loginfo(
+                            f"Sent plan with {len(trajectory.get_trajectory())} steps")
+            self.rate.sleep()
+            
+        car_x = self.race_state.get_car_position()[0]
+        car_y = self.race_state.get_car_position()[1]
+        
+        # compute breaking distance
+        trajectory = Trajectory(self.parameters)
+        #vel_final = trajectory.get_trajectory()[-1].get_velocity()
+        #breaking_distance = 0.5 * (vel_final**2) / \
+        #    (self.parameters.get_max_deceleration())
+
+        breaking_distance = -20
+        
+        # add last position of trajectory and set to 0 (2 for avoiding bug)
+        trajectory.trajectory.append(PlanStep((car_x - breaking_distance, car_y), 2, [2, 0]))
+        # update velocities so that we sure we stop
+        trajectory._bound_velocities()
+
+        # add 0 velocity points
+        STEP = 5
+        METERS_END = self.parameters.get_acc_track_dec_length() + breaking_distance
+        
+
+        for i in range(1, int(METERS_END//STEP)):
+            trajectory.trajectory.append(PlanStep(
+                (trajectory.get_trajectory()[-1].get_position()[0] + STEP, car_y), 2, [2, 0]))
+        
+        # send the trajectory
+        send_trajectory_to_ros_topic(
+            trajectory, self.trajectory_publisher, LTP_Plan)
+
+        rospy.loginfo(f"Final plan with {len(trajectory.get_trajectory())} steps")
+                        
+        rospy.loginfo("race finished")
+
+    """
+    def race_loop(self):
         # TODO: In parameters we assume to have the length and width of the Acceleration race
         # TODO think when the track finishes
 
@@ -79,6 +155,7 @@ class Acceleration(Race):
         serialize_to_file(track_map.get_left_cones(
         ), track_map.get_right_cones(), trajectory.get_trajectory(), "casino")
         #print([planstep.position for planstep in trajectory.trajectory])
+    """
 
 
 class SkidPad(Race):
@@ -184,7 +261,8 @@ class TrackDrive(Race):
                     send_trajectory_to_ros_topic(
                         trajectory, self.trajectory_publisher, LTP_Plan)
 
-                    rospy.loginfo(f"Sent plan with {len(trajectory.get_trajectory())} steps")
+                    rospy.loginfo(
+                        f"Sent plan with {len(trajectory.get_trajectory())} steps")
 
             self.rate.sleep()
 

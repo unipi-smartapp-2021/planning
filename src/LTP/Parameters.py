@@ -6,7 +6,7 @@
 class Parameters():
     def __init__(self):
         # get parameters from knowledgebase (TODO)
-        self.RACE_TYPE = "trackdrive"  # type of race
+        self.RACE_TYPE = "acceleration"  # type of race
 
         self.MASS = 231.1  # kg
 
@@ -45,7 +45,7 @@ class Parameters():
         self.WETNESS = 0.2  # the closer to 1, the more the track is wet
 
         # length of the race in meters (only for acceleration)
-        self._ACC_TRACK_ACC_LENGTH = 75 #length of the acceleration phase in acceleration race
+        self.ACC_TRACK_ACC_LENGTH = 75 #length of the acceleration phase in acceleration race
         self.ACC_TRACK_DEC_LENGTH = 100 #length of the deceleration phase in acceleration race
 
         self.TRACK_WIDTH = 3  # width of the track
