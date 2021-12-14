@@ -1,0 +1,13 @@
+<!-- -->
+<launch>
+  <arg name="role_name" default="ego_vehicle"/>
+  
+  <node pkg="planning" type="ROS_Stp.py" name="ROS_Stp_$(arg role_name)" output="log">
+  </node>
+  
+  <node pkg="execution" type="dispatcher.py" name="dispatcher_$(arg role_name)" output="log">
+  </node>
+  
+  <node pkg="planning" type="Main_LTP.py" name="Main_LTP_$(arg role_name)" output="log">
+  </node>
+</launch>
