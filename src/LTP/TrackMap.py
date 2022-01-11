@@ -229,12 +229,10 @@ class TrackMap:
         labels = db.labels_
         unique_labels = set(labels)
         left_cones = []
-        for k in unique_labels:
-            if k != -1:
-                class_member_mask = (labels == k)
-                xy = df[class_member_mask]
-                if xy.shape[0] > 1:
-                    left_cones.append(xy.iloc[0].values)
+        for label in unique_labels:
+            if label != -1:
+                centroid = np.mean(df[labels == label].values, axis=0)
+                left_cones.append(centroid)
         self.left_cones = left_cones
 
         df = pd.DataFrame(np.array(self.right_cones), columns=['x', 'y'])
@@ -242,12 +240,10 @@ class TrackMap:
         labels = db.labels_
         unique_labels = set(labels)
         right_cones = []
-        for k in unique_labels:
-            if k != -1:
-                class_member_mask = (labels == k)
-                xy = df[class_member_mask]
-                if xy.shape[0] > 1:
-                    right_cones.append(xy.iloc[0].values)
+        for label in unique_labels:
+            if label != -1:
+                centroid = np.mean(df[labels == label].values, axis=0)
+                right_cones.append(centroid)
         self.right_cones = right_cones
 
     def remove_noise_cones(self, noise: int):
