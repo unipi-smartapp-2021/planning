@@ -34,7 +34,7 @@ class Acceleration(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        rospy.loginfo("wainting for cones")
+        rospy.loginfo("waiting for cones")
         while self.race_state.get_finished_status() == False:
             #check if race is finished
             if self.race_state.get_car_position()[0] > self.parameters.get_acc_track_acc_length():
@@ -230,7 +230,7 @@ class TrackDrive(Race):
         super().__init__(parameters, race_state)
 
     def race_loop(self):
-        rospy.loginfo("wainting for cones")
+        rospy.loginfo("waiting for cones")
         while self.race_state.get_finished_status() == False:
             if self.race_state.is_track_map_new():
                 track_map = self.race_state.get_track_map()
