@@ -49,18 +49,19 @@ class TrackMap:
         Each cone is represented by a tuple (x, y) which represent its position
         inside a Cartesian Plane.
     """
-    def __init__(self, left_cones: List[Tuple[float, float]] = [], right_cones: List[Tuple[float, float]] = []):
+    def __init__(self, left_cones: List[Tuple[float, float]] = [], right_cones: List[Tuple[float, float]] = [], car_position: Tuple[float, float] = None, car_direction: Tuple[float, float] = None):
         self.left_cones = remove_duplicates(left_cones)
         self.right_cones = remove_duplicates(right_cones)
+        self.car_position = car_position
+        self.car_direction = car_direction
 
         if len(self.left_cones) > 0 and len(self.right_cones) > 0:
-            #self.remove_noise_cones_dbscan(1,1)
-            self.left_cones.sort(key=lambda x: x[0])
-            self.right_cones.sort(key=lambda x: x[0])
-            self.remove_noise_cones(5)
+            self.remove_noise_cones_dbscan(1,1)
+            self.left_cones, self.right_cones = reorder_cones(self.left_cones, self.right_cones, self.car_position, self.car_direction)
+            #self.left_cones.sort(key=lambda x: x[0])
+            #self.right_cones.sort(key=lambda x: x[0])
+            #self.remove_noise_cones(5)
             #self.left_cones, self.right_cones = reorder_cones(self.get_left_cones(), self.get_right_cones(), (0,0), (2,0))
-        
-        self.car_position = None
     
     def is_line_inside_track(self, curr_pos, next_pos):
         # Find the line between the two points
@@ -219,7 +220,7 @@ class TrackMap:
             plt.scatter(self.car_position[0], self.car_position[1], color='red', label='Car Pos')
         plt.show()
 
-    def remove_noise_cones_dbscan(self, eps, min_points=2):
+    def remove_noise_cones_dbscan(self, eps, min_points=1):
         """
             remove cones with noise
         """

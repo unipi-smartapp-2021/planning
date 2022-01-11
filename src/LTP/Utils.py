@@ -8,44 +8,25 @@ import numpy as np
 """
     Utility module used to define utility functions
 """
-
-def order_cones(cones1, cones2, car_position, car_direction):
-    """
-        order cones1 using car position (cones2 is used only for reference during 
-        the computations, so it is not ordered)
-    """
-    ordered_cones1 = []
-    while len(cones1) > 1:
-        # find cone 1 closest to the car position
-        car_position = np.array(car_position)
-        cone1, cone1_index = find_closest_point_ahead(car_position, car_direction, cones1)
-        # find closest cone2 to car_position
-        cone2, _ = find_closest_point_ahead(car_position, car_direction, cones2)
-
-        if cone1 is None or cone2 is None:
-            break
-        
-        # add cone1 to list of ordered cones
-        ordered_cones1.append(cone1)
-
-        middle_point = compute_middle_point(cone1, cone2)
-        middle_point = np.array(middle_point)
-        car_direction = middle_point - car_position
-        car_position = middle_point
-        # pop cone1
-        cones1.pop(cone1_index)
-    return ordered_cones1
-
 def find_closest_point_ahead(car_position, car_direction, cones):
     # First order all the cones w.r.t. the car position
-    ord_cones = sorted(enumerate(cones), key=lambda cone: compute_distance(car_position, cone[1]))
+    ord_cones = sorted(cones, key=lambda cone: compute_distance(car_position, cone))
+    car_pos_vector = car_direction
 
     # Find the closest cone to the car ahead
-    for i, cone in ord_cones:
+    for cone in ord_cones:
         cone = np.array(cone)
         cone_direction = cone - car_position
-        if np.dot(cone_direction, car_direction) >= 0:
-            return cone, i
+        # Find if cone_direction is in the same direction as car_pos_vector
+        if np.dot(cone_direction, car_pos_vector) >= 0 and compute_distance(cone, car_position) < 10:
+            # Find the index of 'cone' into 'cones'
+            index = -1
+            for i, candidate_cone in enumerate(cones):
+                if candidate_cone[0] == cone[0] and candidate_cone[1] == cone[1]:
+                    index = i
+                    break
+            assert index != -1
+            return cone, index
     return None, None
 
 def reorder_cones(left_cones, right_cones, car_position, car_direction):
@@ -60,71 +41,30 @@ def reorder_cones(left_cones, right_cones, car_position, car_direction):
     Returns:
         Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]: reordered cones
     """
-    # find the closest cones to the car
-    # ordered_left_cones = order_cones(left_cones, right_cones,car_position, car_direction)
-    # ordered_right_cones = order_cones(right_cones, left_cones, car_position, car_direction)
-    # return ordered_left_cones, ordered_right_cones
-
-    #for _ in range(0, len(left_cones)):
-
-    ordered_left_cones = []
+    # find the closest cone to the car
     ordered_right_cones = []
-    initial_car_position = car_position
-    initial_car_direction = car_direction
-    
-    """
-    while len(right_cones) > 0:
+    ordered_left_cones = []
+
+    car_position = np.array(car_position)
+
+    while len(right_cones) > 0 and len(left_cones) > 0:
         # Find the closest cones to the car ahead
         closest_right_cone, closest_right_idx = find_closest_point_ahead(car_position, car_direction, right_cones)
         closest_left_cone, closest_left_idx = find_closest_point_ahead(car_position, car_direction, left_cones)
         if closest_right_cone is None or closest_left_cone is None:
-            print(len(left_cones))
             break
 
-        #ordered_left_cones.append(closest_left_cone)
+        ordered_left_cones.append(closest_left_cone)
         ordered_right_cones.append(closest_right_cone)
 
         # Move the car to the middle point and update car_direction
         middle_point = compute_middle_point(closest_right_cone, closest_left_cone)
         middle_point = np.array(middle_point)
         car_direction = middle_point - car_position
-        car_position = middle_point
+        car_position = middle_point.copy()
 
         right_cones.pop(closest_right_idx)
-        #left_cones.pop(closest_left_idx)
-
-    car_position = initial_car_position
-    car_direction = initial_car_direction
-    
-    while len(left_cones) > 0:
-        # Find the closest cones to the car ahead
-        closest_right_cone, closest_right_idx = find_closest_point_ahead(car_position, car_direction, ordered_right_cones)
-        closest_left_cone, closest_left_idx = find_closest_point_ahead(car_position, car_direction, left_cones)
-        if closest_right_cone is None or closest_left_cone is None:
-            print(len(left_cones))
-            break
-
-        ordered_left_cones.append(closest_left_cone)
-        #ordered_right_cones.append(closest_right_cone)
-
-        # Move the car to the middle point and update car_direction
-        middle_point = compute_middle_point(closest_right_cone, closest_left_cone)
-        middle_point = np.array(middle_point)
-        car_direction = middle_point - car_position
-        car_position = middle_point
-
-        #right_cones.pop(closest_right_idx)
         left_cones.pop(closest_left_idx)
-    """
-
-    # Check is the x coordinate of the cones is in the right order
-    is_monotone = True
-    for l1, l2 in zip(ordered_left_cones, ordered_left_cones[1:]):
-        if l1[0] > l2[0]:
-            is_monotone = False
-            break
-
-    #assert is_monotone
 
     return ordered_left_cones, ordered_right_cones
 
