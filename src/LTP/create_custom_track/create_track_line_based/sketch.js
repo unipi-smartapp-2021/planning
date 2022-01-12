@@ -1,12 +1,13 @@
 //=========================================================================================//
 //parameters for the script:
 const width = 3;          //track width
-const cone_density = 4;     //number of cones per side in each part of the track (each line)
 
 const translate_x = 0;      //translate on x axis
 const translate_y = 0;      //translate on y axis
 const scale = 0.4;          //scale the map. The smaller the scale, the smaller the size of the map will be
 //=========================================================================================//
+
+let cone_density = 0;     //number of cones per side in each part of the track (each line)
 
 //points contains the points the user define at the beginning of the procedure
 let points = [];
@@ -22,19 +23,20 @@ let auto_complete = false
 let show_length = false
 
 //computed is used to say to the script that yellow and blue cones have already been computed 
-computed = false
+let computed = false
 
 //used to mantain the scale indicated by the user
-scaled_width = width * (1 / scale)
+let scaled_width = width * (1 / scale)
 
 //used to know whether the mouse is moved or not
-old_mouse_x = 0
-old_mouse_y = 0
-counter_same_mouse = 0
+let old_mouse_x = 0
+let old_mouse_y = 0
+let counter_same_mouse = 0
 
 //checkboxes
 let checkbox_autocomplete
 let checkbox_length
+let num_cones_input
 let length_segments_input
 let num_segments_input
 let track_name_input
@@ -73,11 +75,20 @@ function setup() {
 
   checkbox_autocomplete = createCheckbox('auto-complete', false);
   checkbox_autocomplete.changed(CheckedEventAutoCompletion);
-  checkbox_autocomplete.position(30 + undo_button.width, pos_h_upper_rect - 8);
+  checkbox_autocomplete.position(15 + undo_button.width, pos_h_upper_rect - 8);
 
   checkbox_length = createCheckbox('show lines', false);
   checkbox_length.changed(CheckedEventShowLength);
-  checkbox_length.position(30 + undo_button.width, pos_h_upper_rect + 12);
+  checkbox_length.position(15 + undo_button.width, pos_h_upper_rect + 12);
+
+  num_cones_input = createInput('30')
+  num_cones_input.position(140 + undo_button.width, pos_h_upper_rect + 5);
+
+  num_cones_input.style("width", "5%")
+  num_cones_input.style("padding", "3px 3px")
+  num_cones_input.style("margin", "1px 0")
+
+  num_cones_input.input(num_cones_updated);
 
   //random area
   random_button = createButton('generate');
@@ -114,7 +125,7 @@ function setup() {
   save_json_button.position(save_button_pos, pos_h_upper_rect);
   save_json_button.mousePressed(sv_json)
 
-  save_json_button.style("border-radius", "4px")  
+  save_json_button.style("border-radius", "4px")
   save_json_button.style("padding", "4px 4px")
 
   save_yaml_button = createButton('save yaml');
@@ -132,12 +143,19 @@ function setup() {
 }
 
 function draw() {
+  num_cones_updated()
+  console.log(cone_density)
   background(110);
 
   //print top rectangle
   fill(color('#64CA5F'));
   stroke("#081b1f");
   rect(0, 0, 1000, height_upper_rect);
+
+  //edit area
+  fill(10, 0, 0);
+  textSize(12);
+  text('num. cones', 180, 12);
 
   //save area
   fill(color('#F13818'));
@@ -362,6 +380,14 @@ function undo() {
   computed = false
 }
 
+function num_cones_updated() {
+  new_cone_density = Math.ceil(parseInt(num_cones_input.value()) / (points.length - 1))
+  if (new_cone_density != cone_density) {
+    computed = false
+    cone_density = new_cone_density
+  }
+}
+
 function random_track() {
   numSeg = parseInt(num_segments_input.value());
   len = parseInt(length_segments_input.value());
@@ -373,7 +399,7 @@ function random_track() {
   const MAX_FAILS = 250;
   let fail = false
 
-  if (numSeg > 20)
+  if (numSeg > 50)
     numSeg = 20;
 
   //compute first two points randomly
@@ -431,7 +457,7 @@ function random_track() {
       counter_fail += 1
     }
 
-    if (counter_fail == MAX_FAILS){
+    if (counter_fail == MAX_FAILS) {
       console.log("Failed generating track. trying again");
       fail = true;;
       break;
@@ -440,11 +466,11 @@ function random_track() {
     points_random.push(new_point);
   }
 
-  if (fail){
+  if (fail) {
     random_track()
-  } else 
+  } else
     points = points_random;
-    track_name_input.value(random(names))
+  track_name_input.value(random(names))
 
   computed = false
 }
