@@ -334,9 +334,11 @@ class STP():
         print(f"real: {real}")
         print(f"real_angle: {math.degrees(real_angle)}, real_module: {real_module}")
         print(f"car_v_r_angle: {math.degrees(car_v_r_angle)}, car_v_r_module: {car_v_r_module}")
+        if car_v_r_module < 1e-3:
+            car_v_r_angle = math.pi/2
         delta_theta = 0.5 * (car_v_r_angle - real_angle)
         print(f"delta_theta: {math.degrees(delta_theta)}") # degrees wrt y-car-axis 
-        delta_v = t[min_index].velocity - car_v_r_module
+        delta_v = 0.5 * (t[min_index].velocity - car_v_r_module)
         print(f"delta_v: {delta_v}")
 
         return self.car.orientation, delta_theta, delta_v
