@@ -55,7 +55,7 @@ class TrackMap:
         self.car_position = car_position
         self.car_direction = car_direction
 
-        if len(self.left_cones) > 0 and len(self.right_cones) > 0:
+        if len(self.left_cones) > 0 and len(self.right_cones) > 0 and self.car_position is not None:
             self.remove_noise_cones_dbscan(1,1)
             self.left_cones, self.right_cones = reorder_cones(self.left_cones, self.right_cones, self.car_position, self.car_direction)
             #self.left_cones.sort(key=lambda x: x[0])
