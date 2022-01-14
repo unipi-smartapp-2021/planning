@@ -45,6 +45,55 @@ class Trajectory:
             right_point = cones_right[find_closest_point(left_point, cones_right, self.distance_fun)]
             self.trajectory.append(PlanStep(compute_middle_point(left_point, right_point)))
 
+    def compute_optimal_trajectory(self, track_map: TrackMap):
+        # First we compute the initial middle trajectory
+        self.compute_middle_trajectory(track_map)
+        # Then we only consider a subset of PlanSteps
+        N_opt_steps = 5
+        subset_trajectory = []
+        for i in range(0, len(self.trajectory), len(self.trajectory) // N_opt_steps):
+            subset_trajectory.append(copy.deepcopy(self.trajectory[i]))
+        # We now generate a Tree with branch factor of 3 (left, middle, right)
+        X = []
+        for step in subset_trajectory:
+            nearest_left_cone = track_map.get_left_cones()[find_closest_point(step.position, track_map.get_left_cones(), self.distance_fun)]
+            nearest_right_cone = track_map.get_right_cones()[find_closest_point(step.position, track_map.get_right_cones(), self.distance_fun)]
+            left = PlanStep(compute_middle_point(step.position, nearest_left_cone))
+            right = PlanStep(compute_middle_point(step.position, nearest_right_cone))
+            X.append([left, step, right])
+        # Now generate all possible trajectories
+        ESTERNO = 0
+        IN_MEZZO = 1
+        INTERNO = 2
+        def generate_trajectories(X, i):
+            if i + 1 == len(X):
+                return [[(ESTERNO, X[i][0])], [(IN_MEZZO, X[i][1])], [(INTERNO, X[i][2])]]
+            else:
+                next_trajectories = generate_trajectories(X, i+1)
+                trajectories = []
+                for traj in next_trajectories:
+                    trajectories.append([(ESTERNO, X[i][0])] + traj)
+                    trajectories.append([(IN_MEZZO, X[i][1])] + traj)
+                    trajectories.append([(INTERNO, X[i][2])] + traj)
+                return trajectories
+        all_trajectories = generate_trajectories(X, 0)
+        # Now we compute the cost of each trajectory and we choose the best one
+        best_trajectory = None
+        best_cost = inf
+        for trajectory in all_trajectories:
+            traj = Trajectory(self.parameters)
+            traj.set_trajectory(list(map(lambda x: x[1], trajectory)))
+            #traj.force_inside_track(track_map)
+            traj.compute_velocities()
+            cost = traj.compute_time()
+            if cost < best_cost:
+                best_trajectory = traj.get_trajectory()
+                target = list(map(lambda x: x[0], trajectory))
+                best_cost = cost
+        # Now we set the best trajectory
+        self.set_trajectory(best_trajectory)
+        return target
+
     def force_inside_track(self, track_map):
         # It forces all the points of the trajectory to be inside the track,
         # Also it make sure that the lines connecting the points of the trajectory is inside the track map
